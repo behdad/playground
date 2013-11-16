@@ -1,15 +1,25 @@
 #!/usr/bin/python
 
-from allchars10 import charstrings
+from allchars1000 import charstrings
 import itertools
 import time
 import sys
 import heapq
 
+_interned_strings = {}
+def intern_string  (iterable):
+	k = tuple (iterable)
+	v = _interned_strings.get (k, None)
+	if v is None:
+		_interned_strings[k] = k
+		v = k
+	return v
+
+
 class String (object):
 
 	def __init__ (self, iterable):
-		self.value = tuple (iterable)
+		self.value = intern_string (iterable)
 
 	def __len__ (self):
 		return len (self.value)
@@ -29,98 +39,73 @@ class String (object):
 	def __cmp__ (self, other):
 		return cmp (self.value, other.value)
 
+	def suffix (self, start = 0):
+		return Suffix (self.value, start)
 
-class Suffix (object):
 
-	def __init__ (self, item, index):
-		self.item = item
-		self.index = index
+class Suffix (String):
+
+	def __init__ (self, item, start = 0):
+		self.__item = intern_string (item)
+		self.__start = start
+		self.__value = self.__item[self.__start:]
 
 	@property
 	def value (self):
-		return self.item[self.index:]
+		return self.__item[self.__start:]
 
 	def __len__ (self):
-		return len (self.item) - index
+		return len (self.__item) - self.__start
 
 	def __getitem__ (self, i):
 		if isinstance (i, slice):
 			indices = xrange (*i.indices (len (self)))
 			return [self[i] for i in indices]
-		return self.item[self.index + i]
+		return self.__item[self.__start + i]
 
 	def __iter__ (self):
-		return itertools.islice (self.item, self.index, None)
+		return itertools.islice (self.__item, self.__start, None)
 
-	def __str__ (self):
-		return str (self.value)
+	def prefix (self, end, freq):
+		assert self.__start + end <= len (self.__item)
+		return Substring (self.__item, self.__start, self.__start + end, freq)
 
-	def __repr__ (self):
-		return "%s(%d, %d)" % (self.__class__.__name__, self.item, self.index)
-
-	def __cmp__ (self, other):
-		return cmp (self.value, other.value)
-
-charstrings = [String(s) for s in charstrings]
-
-start_time = time.time ()
 
 def find_suffixes (strings):
 	"""Return list of all suffixes of strings."""
 	suffixes = []
 	for item in strings:
-		for index in range (len (item)):
-			suffixes.append (Suffix (item, index))
+		for start in range (len (item)):
+			suffixes.append (item.suffix (start))
 	return suffixes
 
-suffixes = find_suffixes (charstrings)
 
-print "Built suffixes"
-print "time ", time.time () - start_time; start_time = time.time ()
+class Substring (String):
 
-print len (suffixes)
-
-suffixes.sort ()
-
-print "Sorted suffixes"
-print "time ", time.time () - start_time; start_time = time.time ()
-
-
-class Substring (object):
-
-	def __init__ (self, item, start, end, freq):
-		self.item = item
-		self.start = start
-		self.end = end
-		self.freq = freq
+	def __init__ (self, item, start = 0, end = -1, freq = 1):
+		self.__item = intern_string (item)
+		self.__start = start
+		self.__end = end
+		self.__freq = freq
+		self.__value = self.__item[self.__start:self.__end]
 
 	@property
 	def value (self):
-		return self.item[self.start:self.end]
+		return self.__item[self.__start:self.__end]
 
 	def __len__ (self):
-		return end - start
+		return self.__end - self.__start
 
 	def __getitem__ (self, i):
 		if isinstance (i, slice):
 			indices = xrange (*i.indices (len (self)))
 			return [self[i] for i in indices]
-		if i >= self.end - self.start:
+		if i >= self.__end - self.__start:
 			raise IndexError ()
-		return self.item[self.start + i]
+		return self.__item[self.__start + i]
 
 	def __iter__ (self):
-		return itertools.islice (self.item, self.start, self.end)
-
-	def __str__ (self):
-		return str (self.value)
-
-	def __repr__ (self):
-		return "%s(%d, %d, %d)" % (self.__class__.__name__, self.item,
-					   self.start, self.end, self.freq)
-
-	def __cmp__ (self, other):
-		return cmp (self.value, other.value)
+		return itertools.islice (self.__item, self.__start, self.__end)
 
 	def cost (self):
 		return len (self) # XXX Return byte cost
@@ -162,9 +147,7 @@ def find_substrings (suffixes, min_freq = 2):
 				break
 			#if l + 1 < len (previous) and freq == i - start_indices[l+1]:
 			#	continue
-			substr = Substring (previous_s.item, previous_s.index,
-					    previous_s.index + l + 1,
-					    freq)
+			substr = previous_s.prefix (l + 1, freq)
 			substrs.append (substr)
 
 		previous = current
@@ -175,4 +158,17 @@ def find_substrings (suffixes, min_freq = 2):
 	return substrs
 
 
-substrs = heapq.heapify (find_substrings (suffixes))
+charstrings = [String(s) for s in charstrings]
+start_time = time.time ()
+suffixes = find_suffixes (charstrings)
+print "Built suffixes: %d" % len (suffixes)
+print "time ", time.time () - start_time; start_time = time.time ()
+suffixes.sort ()
+print "Sorted suffixes"
+print "time ", time.time () - start_time; start_time = time.time ()
+substrs = find_substrings (suffixes)
+print "Found substrings: %d" % len (substrs)
+print "time ", time.time () - start_time; start_time = time.time ()
+heap = heapq.heapify (substrs)
+print "Heapified substrings"
+print "time ", time.time () - start_time; start_time = time.time ()
