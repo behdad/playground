@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from allchars1000 import charstrings
+from fontTools.ttLib import TTFont
 import itertools
 import time
 import sys
@@ -158,20 +158,36 @@ def find_substrings (suffixes, min_freq = 2):
 	return substrs
 
 
-charstrings = [String(s) for s in charstrings]
-start_time = time.time ()
-suffixes = find_suffixes (charstrings)
-print "Built suffixes: %d" % len (suffixes)
-print "time ", time.time () - start_time; start_time = time.time ()
-suffixes.sort ()
-print "Sorted suffixes"
-print "time ", time.time () - start_time; start_time = time.time ()
-substrs = find_substrings (suffixes)
-print "Found substrings: %d" % len (substrs)
-print "time ", time.time () - start_time; start_time = time.time ()
-substrs.sort (key=lambda s: s.subr_saving())
-print "Sorted substrings"
-print "time ", time.time () - start_time; start_time = time.time ()
-heapq.heapify (substrs)
-print "Heapified substrings"
-print "time ", time.time () - start_time; start_time = time.time ()
+if __name__ == '__main__':
+	start_time = time.time ()
+	ttFont = TTFont(sys.argv[1])
+
+	glyphs = ttFont.getGlyphOrder()
+
+	if len(sys.argv) > 2:
+		glyphs = glyphs[:int(sys.argv[2])]
+
+	cffFont = ttFont['CFF '].cff.topDictIndex[0]
+	charstrings = cffFont.CharStrings
+	charstrings = [charstrings.getItemAndSelector(glyph)[0] for glyph in glyphs]
+	for cs in charstrings:
+		cs.decompile()
+	charstrings = [cs.program for cs in charstrings]
+
+	print "Loaded charstrings: %d" % len (charstrings)
+	charstrings = [String(s) for s in charstrings]
+	suffixes = find_suffixes (charstrings)
+	print "Built suffixes: %d" % len (suffixes)
+	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
+	suffixes.sort ()
+	print "Sorted suffixes"
+	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
+	substrs = find_substrings (suffixes)
+	print "Found substrings: %d" % len (substrs)
+	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
+	substrs.sort (key=lambda s: s.subr_saving())
+	print "Sorted substrings"
+	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
+	heapq.heapify (substrs)
+	print "Heapified substrings"
+	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
