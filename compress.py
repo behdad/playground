@@ -110,6 +110,9 @@ class Substring (String):
 	def cost (self):
 		return len (self) # XXX Return byte cost
 
+	def freq (self):
+		return self.__freq
+
 	def subr_saving (self, call_cost = 2, subr_overhead = 2):
 		return (self.cost () * self.__freq # Avoided copies
 		        - self.cost ()             # Subroutine body
@@ -196,9 +199,13 @@ if __name__ == '__main__':
 	substrs = find_substrings (suffixes)
 	print "Found substrings: %d" % len (substrs)
 	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
-	substrs.sort (key=lambda s: s.subr_saving())
+	substrs.sort (key=lambda s: -s.subr_saving())
 	print "Sorted substrings"
 	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
-	heapq.heapify (substrs)
-	print "Heapified substrings"
-	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+	#heapq.heapify (substrs)
+	#print "Heapified substrings"
+	#print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+
+	print "Savings ~= size * freq"
+	for s in substrs:
+		print s.subr_saving(), '~=', s.cost(), '*', s.freq(), s
