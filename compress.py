@@ -170,24 +170,35 @@ if __name__ == '__main__':
 	cffFont = ttFont['CFF '].cff.topDictIndex[0]
 	charstrings = cffFont.CharStrings
 	charstrings = [charstrings.getItemAndSelector(glyph)[0] for glyph in glyphs]
+	print "Loaded charstrings: %d" % len (charstrings)
+	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+
 	for cs in charstrings:
 		cs.decompile()
-	charstrings = [cs.program for cs in charstrings]
+	print "Decompiled charstrings: %d" % len (charstrings)
+	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 
-	print "Loaded charstrings: %d" % len (charstrings)
-	charstrings = [String(s) for s in charstrings]
+	charstrings = [cs.program for cs in charstrings]
+	print "%d charstrings" % len(charstrings)
+	total_tokens = sum([len(cs) for cs in charstrings])
+	print "%d total tokens; average %g token per charstring" % (total_tokens, float(total_tokens) / len(charstrings))
+
+	charstrings = [String(cs) for cs in charstrings]
+	print "Prepared charstrings: %d" % len (charstrings)
+	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+
 	suffixes = find_suffixes (charstrings)
 	print "Built suffixes: %d" % len (suffixes)
-	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
+	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 	suffixes.sort ()
 	print "Sorted suffixes"
-	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
+	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 	substrs = find_substrings (suffixes)
 	print "Found substrings: %d" % len (substrs)
 	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
 	substrs.sort (key=lambda s: s.subr_saving())
 	print "Sorted substrings"
-	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
+	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 	heapq.heapify (substrs)
 	print "Heapified substrings"
-	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
+	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
