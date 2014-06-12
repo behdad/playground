@@ -121,7 +121,7 @@ class Substring (String):
 		       )
 
 
-def find_substrings (suffixes, min_freq = 2):
+def find_substrings (suffixes, branching=True, min_freq = 2):
 	"""Return all substrings of suffixes with frequency >= min_freq."""
 
 	substrs = []
@@ -148,8 +148,11 @@ def find_substrings (suffixes, min_freq = 2):
 			freq = i - start_indices[l]
 			if freq < min_freq:
 				break
-			#if l + 1 < len (previous) and freq == i - start_indices[l+1]:
-			#	continue
+			if branching and l + 1 < len (previous) and freq == i - start_indices[l+1]:
+				# This substring is redundant since the substring
+				# one longer has the same frequency.  Ie., this one
+				# is not "branching".
+				continue
 			substr = previous_s.prefix (l + 1, freq)
 			substrs.append (substr)
 
@@ -197,7 +200,7 @@ if __name__ == '__main__':
 	print "Sorted suffixes"
 	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 	substrs = find_substrings (suffixes)
-	print "Found substrings: %d" % len (substrs)
+	print "Found branching substrings: %d" % len (substrs)
 	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
 	substrs.sort (key=lambda s: -s.subr_saving())
 	print "Sorted substrings"
