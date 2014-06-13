@@ -240,6 +240,10 @@ if __name__ == '__main__':
 	#print "Heapified substrings"
 	#print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 
+	substrs = [s for s in substrs if s.subr_saving() > 0]
+	print "Discarded substrings not worth subroutinizing. Left with:", len (substrs)
+
+	print
 	print "Savings ~= size * freq"
 	for s in substrs:
 		saving = s.subr_saving()
