@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from fontTools.ttLib import TTFont
+from fontTools.misc import psCharStrings
 import itertools
 import time
 import sys
@@ -15,6 +16,17 @@ def intern_string  (iterable):
 		v = k
 	return v
 
+def tokenCost (token):
+	tp = type (token)
+	if issubclass(tp, basestring):
+		if token[:8] in ('hintmask', 'cntrmask'):
+			return 1 + len(token[8:])
+		return len(psCharStrings.T2CharString.opcodes[token])
+	elif tp == int:
+		return len(psCharStrings.encodeIntT2(token))
+	elif tp == float:
+		return len(psCharStrings.encodeFixed(token))
+	assert 0
 
 class String (object):
 
@@ -108,12 +120,16 @@ class Substring (String):
 		return itertools.islice (self.__item, self.__start, self.__end)
 
 	def cost (self):
-		return len (self) # XXX Return byte cost
+		return sum ([tokenCost(token) for token in self])
 
 	def freq (self):
 		return self.__freq
 
-	def subr_saving (self, call_cost = 2, subr_overhead = 2):
+	def subr_saving (self, call_cost = 2, subr_overhead = 3):
+		# TODO:
+		# - If substring ends in "endchar", we need no "return"
+		#   added and as such subr_overhead will be one byte
+		#   smaller.
 		return (self.cost () * self.__freq # Avoided copies
 		        - self.cost ()             # Subroutine body
 		        - call_cost * self.__freq  # Cost of calling
@@ -226,4 +242,7 @@ if __name__ == '__main__':
 
 	print "Savings ~= size * freq"
 	for s in substrs:
-		print s.subr_saving(), '~=', s.cost(), '*', s.freq(), s
+		saving = s.subr_saving()
+		if saving <= 0:
+			break
+		print saving, '~=', s.cost(), '*', s.freq(), s
