@@ -215,7 +215,7 @@ if __name__ == '__main__':
 		processed_charstrings.append(tokens)
 	charstrings = processed_charstrings
 	print "Decompiled charstrings: %d" % len (charstrings)
-	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 
 	total_tokens = sum([len(cs) for cs in charstrings])
 	print "%d total tokens; average %g token per charstring" % (total_tokens, float(total_tokens) / len(charstrings))
@@ -224,16 +224,16 @@ if __name__ == '__main__':
 
 	suffixes = find_suffixes (charstrings)
 	print "Built suffixes: %d" % len (suffixes)
-	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 	suffixes.sort ()
 	print "Sorted suffixes"
-	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 	substrs = find_substrings (suffixes)
 	print "Found branching substrings: %d" % len (substrs)
-	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 	substrs.sort (key=lambda s: -s.subr_saving())
 	print "Sorted substrings"
-	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 	#heapq.heapify (substrs)
 	#print "Heapified substrings"
 	#print "Took %gs" % (time.time () - start_time); start_time = time.time ()
