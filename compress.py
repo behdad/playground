@@ -60,7 +60,6 @@ class Suffix (String):
 	def __init__ (self, item, start = 0):
 		self.__item = intern_string (item)
 		self.__start = start
-		self.__value = self.__item[self.__start:]
 
 	@property
 	def value (self):
@@ -99,7 +98,6 @@ class Substring (String):
 		self.__start = start
 		self.__end = end
 		self.__freq = freq
-		self.__value = self.__item[self.__start:self.__end]
 
 	@property
 	def value (self):
