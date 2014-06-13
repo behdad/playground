@@ -179,19 +179,34 @@ if __name__ == '__main__':
 	print "Loaded charstrings: %d" % len (charstrings)
 	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 
+	processed_charstrings = []
 	for cs in charstrings:
 		cs.decompile()
+		program = cs.program
+		tokens = []
+		piter = iter(enumerate(program[:-1]))
+		for i,token in piter:
+			assert token not in ("callsubr", "callgsubr", "return", "endchar")
+			if token in ("hintmask", "cntrmask"):
+				# Attach next token to this, as a subroutine
+				# call cannot be placed between this token and
+				# the following.
+				inext, tokennext = next(piter)
+				token += tokennext
+			tokens.append(token)
+
+		assert program[-1] == "endchar"
+		tokens.append(program[-1])
+
+		processed_charstrings.append(tokens)
+	charstrings = processed_charstrings
 	print "Decompiled charstrings: %d" % len (charstrings)
 	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 
-	charstrings = [cs.program for cs in charstrings]
-	print "%d charstrings" % len(charstrings)
 	total_tokens = sum([len(cs) for cs in charstrings])
 	print "%d total tokens; average %g token per charstring" % (total_tokens, float(total_tokens) / len(charstrings))
 
 	charstrings = [String(cs) for cs in charstrings]
-	print "Prepared charstrings: %d" % len (charstrings)
-	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 
 	suffixes = find_suffixes (charstrings)
 	print "Built suffixes: %d" % len (suffixes)
