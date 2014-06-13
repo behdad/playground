@@ -201,7 +201,7 @@ if __name__ == '__main__':
 	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 	substrs = find_substrings (suffixes)
 	print "Found branching substrings: %d" % len (substrs)
-	print "Took %.1gs" % (time.time () - start_time); start_time = time.time ()
+	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 	substrs.sort (key=lambda s: -s.subr_saving())
 	print "Sorted substrings"
 	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
