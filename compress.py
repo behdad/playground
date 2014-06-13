@@ -118,12 +118,14 @@ class Substring (String):
 		return itertools.islice (self.__item, self.__start, self.__end)
 
 	def cost (self):
-		return sum ([tokenCost(token) for token in self])
+		if not hasattr(self, "__cost"):
+			self.__cost = sum ([tokenCost(token) for token in self])
+		return self.__cost
 
 	def freq (self):
 		return self.__freq
 
-	def subr_saving (self, call_cost = 2, subr_overhead = 3):
+	def subr_saving (self, call_cost = 5, subr_overhead = 3):
 		# TODO:
 		# - If substring ends in "endchar", we need no "return"
 		#   added and as such subr_overhead will be one byte
