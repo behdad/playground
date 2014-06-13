@@ -182,11 +182,13 @@ def find_substrings (suffixes, branching=True, min_freq = 2):
 
 if __name__ == '__main__':
 	start_time = time.time ()
-	ttFont = TTFont(sys.argv[1])
+	filename = sys.argv[1]
+	ttFont = TTFont(filename)
 
 	glyphs = ttFont.getGlyphOrder()
 
 	if len(sys.argv) > 2:
+		filename = None
 		glyphs = glyphs[:int(sys.argv[2])]
 
 	cffFont = ttFont['CFF '].cff.topDictIndex[0]
@@ -230,7 +232,17 @@ if __name__ == '__main__':
 	suffixes.sort ()
 	print "Sorted suffixes"
 	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
+	if filename:
+		import cPickle as pickle
+		pickle.dump(suffixes, file(filename+".suffixes.pickle", "w"), -1)
+		print "Wrote %s.suffixes.pickle" % filename
+		print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 	substrs = find_substrings (suffixes)
+	if filename:
+		import cPickle as pickle
+		pickle.dump(substrs, file(filename+".substrs.pickle", "w"), -1)
+		print "Wrote %s.substrs.pickle" % filename
+		print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 	print "Found branching substrings: %d" % len (substrs)
 	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 	substrs.sort (key=lambda s: -s.subr_saving())
