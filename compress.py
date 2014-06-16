@@ -193,13 +193,20 @@ if __name__ == '__main__':
 
 	cffFont = ttFont['CFF '].cff.topDictIndex[0]
 	charstrings = cffFont.CharStrings
-	charstrings = [charstrings.getItemAndSelector(glyph)[0] for glyph in glyphs]
+	print "Loaded CFF font"
+	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+
+	charstrings = [charstrings[glyph] for glyph in glyphs]
 	print "Loaded charstrings: %d" % len (charstrings)
+	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+
+	for cs in charstrings:
+		cs.decompile()
+	print "Decompiled charstrings: %d" % len (charstrings)
 	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
 
 	processed_charstrings = []
 	for cs in charstrings:
-		cs.decompile()
 		program = cs.program
 		tokens = []
 		piter = iter(enumerate(program[:-1]))
@@ -218,7 +225,7 @@ if __name__ == '__main__':
 
 		processed_charstrings.append(tokens)
 	charstrings = processed_charstrings
-	print "Decompiled charstrings: %d" % len (charstrings)
+	print "Preprocessed charstrings: %d" % len (charstrings)
 	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 
 	total_tokens = sum([len(cs) for cs in charstrings])
