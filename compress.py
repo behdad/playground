@@ -245,13 +245,13 @@ if __name__ == '__main__':
 		print "Wrote %s.suffixes.pickle" % filename
 		print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 	substrs = find_substrings (suffixes)
+	print "Found branching substrings: %d" % len (substrs)
+	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 	if filename:
 		import cPickle as pickle
 		pickle.dump(substrs, file(filename+".substrs.pickle", "w"), -1)
 		print "Wrote %s.substrs.pickle" % filename
 		print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
-	print "Found branching substrings: %d" % len (substrs)
-	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
 	substrs.sort (key=lambda s: -s.subr_saving())
 	print "Sorted substrings"
 	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
