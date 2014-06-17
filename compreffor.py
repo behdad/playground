@@ -41,6 +41,14 @@ class String (object):
 
 	def __cmp__ (self, other):
 		return cmp (self.value, other.value)
+		# The following version is faster in paper, but not in practice!
+		a,b = iter(self),iter(other)
+		la,lb = len(self),len(other)
+		limit = min(la,lb)
+		for i in range(limit):
+			c = cmp(next(a),next(b))
+			if c: return c
+		return cmp(la,lb)
 
 	def suffix (self, start = 0):
 		return Suffix (self.value, start)
