@@ -7,15 +7,6 @@ import time
 import sys
 import heapq
 
-_interned_strings = {}
-def intern_string  (iterable):
-	k = tuple (iterable)
-	v = _interned_strings.get (k, None)
-	if v is None:
-		_interned_strings[k] = k
-		v = k
-	return v
-
 def tokenCost (token):
 	tp = type (token)
 	if issubclass(tp, basestring):
@@ -31,7 +22,7 @@ def tokenCost (token):
 class String (object):
 
 	def __init__ (self, iterable):
-		self.value = intern_string (iterable)
+		self.value = tuple (iterable)
 
 	def __len__ (self):
 		return len (self.value)
@@ -58,7 +49,7 @@ class String (object):
 class Suffix (String):
 
 	def __init__ (self, item, start = 0):
-		self.__item = intern_string (item)
+		self.__item = item
 		self.__start = start
 
 	@property
@@ -94,7 +85,7 @@ def find_suffixes (strings):
 class Substring (String):
 
 	def __init__ (self, item, start = 0, end = -1, freq = 1):
-		self.__item = intern_string (item)
+		self.__item = item
 		self.__start = start
 		self.__end = end
 		self.__freq = freq
