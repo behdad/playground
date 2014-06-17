@@ -193,17 +193,17 @@ if __name__ == '__main__':
 
 	cffFont = ttFont['CFF '].cff.topDictIndex[0]
 	charstrings = cffFont.CharStrings
-	print "Loaded CFF font"
-	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+	print("Loaded CFF font")
+	print("Took %gs" % (time.time () - start_time)); start_time = time.time ()
 
 	charstrings = [charstrings[glyph] for glyph in glyphs]
-	print "Loaded charstrings: %d" % len (charstrings)
-	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+	print("Loaded charstrings: %d" % len (charstrings))
+	print("Took %gs" % (time.time () - start_time)); start_time = time.time ()
 
 	for cs in charstrings:
 		cs.decompile()
-	print "Decompiled charstrings: %d" % len (charstrings)
-	print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+	print("Decompiled charstrings: %d" % len (charstrings))
+	print("Took %gs" % (time.time () - start_time)); start_time = time.time ()
 
 	processed_charstrings = []
 	for cs in charstrings:
@@ -216,8 +216,8 @@ if __name__ == '__main__':
 				# Attach next token to this, as a subroutine
 				# call cannot be placed between this token and
 				# the following.
-				inext, tokennext = next(piter)
-				token += tokennext
+				inext, hints = next(piter)
+				token += hints if str==bytes else hints.decode('latin1')
 			tokens.append(token)
 
 		assert program[-1] == "endchar"
@@ -225,47 +225,47 @@ if __name__ == '__main__':
 
 		processed_charstrings.append(tokens)
 	charstrings = processed_charstrings
-	print "Preprocessed charstrings: %d" % len (charstrings)
-	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
+	print("Preprocessed charstrings: %d" % len (charstrings))
+	print("Took %gs" % (time.time() - start_time)); start_time = time.time();sys.stdout.flush()
 
 	total_tokens = sum([len(cs) for cs in charstrings])
-	print "%d total tokens; average %g token per charstring" % (total_tokens, float(total_tokens) / len(charstrings))
+	print("%d total tokens; average %g token per charstring" % (total_tokens, float(total_tokens) / len(charstrings)))
 
 	charstrings = [String(cs) for cs in charstrings]
 
 	suffixes = find_suffixes (charstrings)
-	print "Built suffixes: %d" % len (suffixes)
-	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
+	print("Built suffixes: %d" % len (suffixes))
+	print("Took %gs" % (time.time() - start_time)); start_time = time.time();sys.stdout.flush()
 	suffixes.sort ()
-	print "Sorted suffixes"
-	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
+	print("Sorted suffixes")
+	print("Took %gs" % (time.time() - start_time)); start_time = time.time();sys.stdout.flush()
 	if filename:
 		import cPickle as pickle
 		pickle.dump(suffixes, file(filename+".suffixes.pickle", "w"), -1)
-		print "Wrote %s.suffixes.pickle" % filename
-		print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
+		print("Wrote %s.suffixes.pickle" % filename)
+		print("Took %gs" % (time.time() - start_time)); start_time = time.time();sys.stdout.flush()
 	substrs = find_substrings (suffixes)
-	print "Found branching substrings: %d" % len (substrs)
-	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
+	print("Found branching substrings: %d" % len (substrs))
+	print("Took %gs" % (time.time() - start_time)); start_time = time.time();sys.stdout.flush()
 	if filename:
 		import cPickle as pickle
 		pickle.dump(substrs, file(filename+".substrs.pickle", "w"), -1)
-		print "Wrote %s.substrs.pickle" % filename
-		print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
+		print("Wrote %s.substrs.pickle" % filename)
+		print("Took %gs" % (time.time() - start_time)); start_time = time.time();sys.stdout.flush()
 	substrs.sort (key=lambda s: -s.subr_saving())
-	print "Sorted substrings"
-	print "Took %gs" % (time.time() - start_time); start_time = time.time();sys.stdout.flush()
+	print("Sorted substrings")
+	print("Took %gs" % (time.time() - start_time)); start_time = time.time();sys.stdout.flush()
 	#heapq.heapify (substrs)
-	#print "Heapified substrings"
-	#print "Took %gs" % (time.time () - start_time); start_time = time.time ()
+	#print("Heapified substrings")
+	#print("Took %gs" % (time.time () - start_time)); start_time = time.time ()
 
 	substrs = [s for s in substrs if s.subr_saving() > 0]
-	print "Discarded substrings not worth subroutinizing. Left with:", len (substrs)
+	print("Discarded substrings not worth subroutinizing. Left with: %d" % len (substrs))
 
 	print
-	print "Savings ~= size * freq"
+	print("Savings ~= size * freq")
 	for s in substrs:
 		saving = s.subr_saving()
 		if saving <= 0:
 			break
-		print saving, '~=', s.cost(), '*', s.freq(), s
+		print(saving, '~=', s.cost(), '*', s.freq(), s)
