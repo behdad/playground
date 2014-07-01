@@ -13,6 +13,7 @@ class token_t
   token_t (const std::string &str)
   {
     unsigned int len = str.size ();
+    assert (len > 0);
     assert (len < 256);
     if (len < int_size)
     {
@@ -35,4 +36,14 @@ class token_t
   private:
   static const unsigned int int_size = sizeof (int_type);
   int_type value;
+
+  static inline unsigned int quark_for (const std::string &str)
+  {
+  }
+
+  static unsigned int next_quark;
+  static vector<std::string>
 };
+
+unsigned int token_t::next_quark = 0;
+
