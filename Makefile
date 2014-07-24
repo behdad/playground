@@ -1,6 +1,9 @@
 
-CXXFLAGS = -c -std=c++0x
+CXXFLAGS = -std=c++11
 
-all: compreffor.o
+%: %.cc
+	c++ $< -o $@ $(CXXFLAGS)
+
+all: compreffor
 clean:
-	rm -f compreffor.o
+	rm -f compreffor
