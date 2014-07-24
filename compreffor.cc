@@ -7,46 +7,56 @@
 
 class token_t
 {
-  typedef uint32_t int_type;
+  public:
+  token_t (uint32_t value_ = 0) : value(value_) {}
+  token_t (const token_t &other) : value(other.value) {}
+  explicit operator uint32_t () const { return value; }
+  unsigned int bytelen() const { return value & 0xFFu; }
+  unsigned int firstbyte() const { return (value>>8) & 0xFFu; }
+  private:
+  uint32_t value;
+};
 
-  token_t (int_type value_ = 0) : value(value_) {}
-  token_t (token_t &other) : value(other.value) {}
-  token_t (const std::string &str)
+class token_pool_t
+{
+  token_pool_t () : quark_map(), last_quark(0) {}
+
+  token_t from_string (const std::string &str)
   {
     unsigned int len = str.size ();
     assert (len > 0);
     assert (len < 256);
-    if (len < int_size)
+    if (len < 4)
     {
-      unsigned int i = 0;
-      int_type v = len;
-      while (i++ < len)
-      {
-	v <<= 8;
-	v |= str[i];
-      }
-      v <<= 8 * (int_size - len - 1);
-      value = v;
+      uint32_t v = 0;
+      for (int i = len - 1; i >= 0; i--)
+	v = (v<<8) | str[i];
+      v = (v<<8) | len;
+      return token_t (v);
     }
     else
     {
-      assert (false); // Not implemented
+      uint16_t quark = quark_for (std::string (str.c_str() + 1)/*TODO*/);
+      uint32_t v = (uint32_t(quark)<<16) | (uint32_t(str[0])<<8) | len;
+      return token_t (v);
     }
   }
 
   private:
-  static const unsigned int int_size = sizeof (int_type);
-  int_type value;
-
-  static inline unsigned int quark_for (const std::string &str)
+  uint16_t quark_for (const std::string &str)
   {
-    return 0;
+    auto qq = quark_map.find(str);
+    if (qq != quark_map.end())
+      return (*qq).second;
+    assert (last_quark != 0xFFFFu);
+    uint16_t q = ++last_quark;
+    quark_map[str] = q;
+    return q;
   }
 
-  static unsigned int next_quark;
+  std::map<std::string, uint16_t> quark_map;
+  uint16_t last_quark;
 };
-
-unsigned int token_t::next_quark = 0;
 
 int
 main (void)
