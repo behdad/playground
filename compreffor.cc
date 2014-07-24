@@ -85,6 +85,8 @@ main (void)
     charstrings.push_back (charstring);
   }
 
+  std::cout << "Read " << num_glyphs << " glyphs in " << offsets[num_glyphs] << " bytes\n";
+
   return 0;
 }
 
