@@ -52,12 +52,12 @@ int
 main (void)
 {
   unsigned int num_glyphs, off_size;
-  uint8_t c1, c0;
-  std::cin >> c1 >> c0;
-  num_glyphs = (c1<<8)|c0;
+  uint8_t c[2];
+  std::cin.read ((char *) c, 2);
+  num_glyphs = (c[0]<<8)|c[1];
   assert (num_glyphs > 0);
-  std::cin >> c0;
-  off_size = c0;
+  std::cin.read ((char *) c, 1);
+  off_size = c[0];
   assert (off_size > 0);
   assert (off_size <= 4);
   std::vector<uint32_t> offsets;
@@ -66,8 +66,9 @@ main (void)
     uint32_t offset = 0;
     for (unsigned int j = 0; j < off_size; j++)
     {
-      std::cin.read ((char *) &c0, 1);
-      offset = (offset<<8)|c0;
+      uint8_t c;
+      std::cin.read ((char *) &c, 1);
+      offset = (offset<<8)|c;
     }
     offsets.push_back (offset);
   }
