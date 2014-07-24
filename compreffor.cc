@@ -67,7 +67,7 @@ main (void)
     for (unsigned int j = 0; j < off_size; j++)
     {
       uint8_t c;
-      std::cin.read ((char *) &c, 1);
+      std::cin.get ((char &) c);
       offset = (offset<<8)|c;
     }
     offsets.push_back (offset);
