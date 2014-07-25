@@ -17,9 +17,9 @@ class token_t
   uint32_t value;
 };
 
-class token_pool_t
+class token_factory_t
 {
-  token_pool_t () : quark_map(), last_quark(0) {}
+  token_factory_t () : quark_map(), last_quark(0) {}
 
   token_t from_string (const std::string &str)
   {
@@ -36,7 +36,7 @@ class token_pool_t
     }
     else
     {
-      uint16_t quark = quark_for (std::string (str.c_str() + 1)/*TODO*/);
+      uint16_t quark = quark_for (std::string (str, 1));
       uint32_t v = (uint32_t(quark)<<16) | (uint32_t(str[0])<<8) | len;
       return token_t (v);
     }
