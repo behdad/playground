@@ -8,18 +8,19 @@
 class token_t
 {
   public:
-  token_t (uint32_t value_ = 0) : value(value_) {}
+  token_t () : value(0) {}
   token_t (const token_t &other) : value(other.value) {}
-  explicit operator uint32_t () const { return value; }
   unsigned int bytelen() const { return value & 0xFFu; }
   unsigned int firstbyte() const { return (value>>8) & 0xFFu; }
   private:
+  friend class token_factory_t;
+  explicit token_t (uint32_t value_) : value(value_) {}
   uint32_t value;
 };
 
 class token_factory_t
 {
-  token_factory_t () : quark_map(), last_quark(0) {}
+  token_factory_t () : quark_map(), quark_unmap() {}
 
   token_t from_string (const std::string &str)
   {
@@ -36,26 +37,58 @@ class token_factory_t
     }
     else
     {
-      uint16_t quark = quark_for (std::string (str, 1));
-      uint32_t v = (uint32_t(quark)<<16) | (uint32_t(str[0])<<8) | len;
+      uint16_t q = quark_from_string (std::string (str, 1));
+      uint32_t v = (uint32_t(q)<<16) | (uint32_t(str[0])<<8) | len;
       return token_t (v);
     }
   }
 
+  std::string to_string (token_t tok) const
+  {
+    unsigned int len = tok.bytelen();
+    uint32_t v = tok.value;
+    if (len < 4)
+    {
+      char buf[3];
+      for (unsigned int i = 0; i < len; i++)
+      {
+        v >>= 8;
+	buf[i] = v&0xFFu;
+      }
+      return std::string(buf, len);
+    }
+    else
+    {
+      uint16_t q = v>>16;
+      char firstbyte = v>>8;
+      std::string str;
+      str.push_back(firstbyte);
+      str.append(quark_to_string(q));
+      return str;
+    }
+  }
+
   private:
-  uint16_t quark_for (const std::string &str)
+  //XXX make uncopyable properly
+
+  uint16_t quark_from_string (const std::string &str)
   {
     auto qq = quark_map.find(str);
     if (qq != quark_map.end())
       return (*qq).second;
-    assert (last_quark != 0xFFFFu);
-    uint16_t q = ++last_quark;
+    uint16_t q = quark_unmap.size();
     quark_map[str] = q;
+    quark_unmap.push_back(str);
+    assert(q <= 0xFFFFu);
     return q;
   }
-
+  std::string quark_to_string (uint16_t q) const
+  {
+    assert(q < quark_unmap.size());
+    return quark_unmap[q];
+  }
   std::map<std::string, uint16_t> quark_map;
-  uint16_t last_quark;
+  std::vector<std::string> quark_unmap;
 };
 
 int
