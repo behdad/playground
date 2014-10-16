@@ -31,14 +31,32 @@ def drawing_compat(d0, d1):
 				return False
 	return True
 
+def draw_lines(cr, points, widths):
+	cr.new_sub_path()
+	for i,p in enumerate(points):
+		cr.line_to(p[0] + (1000 - widths[i])/2., p[1])
+
+master_colors = [
+(1,0,0),
+(0,1,0),
+(0,0,1),
+(1,0,1),
+(1,1,0),
+(0,1,1),
+]
+
 family = "NotoSansCJK"
-weights = ["Black", "Regular", "Thin"]
+weights = ["Regular", "DemiLight", "Light", "Thin"]
 ext = "otf"
 
 fonts = [TTFont("%s-%s.%s" % (family, weight, ext)) for weight in weights]
 glyphsets = [f.getGlyphSet() for f in fonts]
 glyphs = fonts[0].getGlyphOrder()
 assert all(glyphs == f.getGlyphOrder() for f in fonts)
+
+upem = fonts[0]['head'].unitsPerEm
+ascent = fonts[0]['hhea'].ascent
+descent = -fonts[0]['hhea'].descent
 
 n = 0
 if len(sys.argv) > 1:
@@ -54,18 +72,15 @@ for g in glyphs[n:]:
 		drawings.append(pen.contours)
 		widths.append(outline.width)
 	print g
-	#pprint.pprint(drawings)
-	surface = cairo.ImageSurface(cairo.FORMAT_RGB24, 1400, 1400)
+	surface = cairo.ImageSurface(cairo.FORMAT_RGB24, 7*72,7*72)
 	cr = cairo.Context(surface)
-	cr.set_line_width(1)
+	cr.translate(.5*72, .5*72)
 	cr.scale(1,-1)
-	cr.translate(200,-1100)
+	cr.scale(6*72./upem, 6*72./upem)
+	cr.translate(0, -ascent)
 	cr.set_source_rgb(1, 1, 1)
 	cr.paint()
-	def draw_lines(cr, points, widths):
-		cr.new_sub_path()
-		for i,p in enumerate(points):
-			cr.line_to(p[0] + (1000 - widths[i])/2., p[1])
+	cr.set_line_width(upem/1000.)
 	for i,drawing in enumerate(drawings):
 		cr.save()
 		cr.translate((1000 - widths[i])/2.,0)
@@ -77,9 +92,9 @@ for g in glyphs[n:]:
 				else:
 					cr.curve_to(*sum(op,()))
 			cr.close_path()
-		cr.set_source_rgba([1,0,0][i], [0,1,0][i], [0,0,1][i], .02)
+		cr.set_source_rgba(*master_colors[i]+(.04,))
 		cr.fill_preserve()
-		cr.set_source_rgba([1,0,0][i], [0,1,0][i], [0,0,1][i], .2)
+		cr.set_source_rgba(*master_colors[i]+(.4,))
 		cr.stroke()
 		cr.restore()
 	if all(drawing_compat(drawings[0], drawing) for drawing in drawings):
