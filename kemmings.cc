@@ -24,59 +24,52 @@
 #include <assert.h>
 #include <string.h>
 
+#include <algorithm>
+
+using std::min;
+using std::max;
+
 
 #define SCALE 1
 #define MARGIN 64
 #define SIZE 512
 
 
+static cairo_surface_t *create_surface(void) {
+  return cairo_image_surface_create(CAIRO_FORMAT_A8,
+				    (SIZE+2*MARGIN)*SCALE,
+				    (SIZE+2*MARGIN)*SCALE);
+}
+
 static cairo_t *create_image(void) {
-  cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
-                                                        (SIZE+2*MARGIN)*SCALE,
-                                                        (SIZE+2*MARGIN)*SCALE);
+  cairo_surface_t *surface = create_surface();
   cairo_t *cr = cairo_create(surface);
   cairo_surface_destroy(surface);
   return cr;
 }
 
-#if 0
-static cairo_surface_t *texture_map(cairo_surface_t *src,
-                                    cairo_surface_t *tex) {
-  uint32_t *s = (uint32_t *) cairo_image_surface_get_data(src);
+static cairo_surface_t *iterate (cairo_surface_t *src)
+{
+  uint8_t *s = (uint8_t *) cairo_image_surface_get_data(src);
   unsigned int width  = cairo_image_surface_get_width(src);
   unsigned int height = cairo_image_surface_get_height(src);
-  unsigned int sstride = cairo_image_surface_get_stride(src) / 4;
+  unsigned int sstride = cairo_image_surface_get_stride(src);
 
-  cairo_surface_t *dst = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
-                                                    width, height);
-  uint32_t *d = (uint32_t *) cairo_image_surface_get_data(dst);
-  unsigned int dstride = cairo_image_surface_get_stride(dst) / 4;
-
-  uint32_t *t = (uint32_t *) cairo_image_surface_get_data(tex);
-  unsigned int twidth  = cairo_image_surface_get_width(tex);
-  unsigned int theight = cairo_image_surface_get_height(tex);
-  unsigned int tstride = cairo_image_surface_get_stride(tex) / 4;
-
-  assert(twidth == 256 && theight == 256);
+  cairo_surface_t *dst = create_surface();
+  uint8_t *d = (uint8_t *) cairo_image_surface_get_data(dst);
+  unsigned int dstride = cairo_image_surface_get_stride(dst);
 
   for (unsigned int y = 0; y < height; y++) {
     for (unsigned int x = 0; x < width; x++) {
-      unsigned int pix = s[x];
-      unsigned int sa = pix >> 24;
-      unsigned int sr = (pix >> 16) & 0xFF;
-      unsigned int sg = (pix >> 8) & 0xFF;
-      unsigned int sb = pix & 0xFF;
-      if (sa == 0) {
-        d[x] = 0;
-        continue;
+
+      if (y == 0 || y == height - 1 ||
+	  x == 0 || x == width - 1)
+      {
+	d[x] = 0;
+	continue;
       }
-      if (sa != 255) {
-        sr = sr * 255 / sa;
-        sg = sg * 255 / sa;
-        sb = sb * 255 / sa;
-      }
-      assert(sb >= 127 && sb <= 129);
-      d[x] = t[tstride * sg + sr];
+
+      d[x] = min(255., max(s[x] * 1., s[x - 1] * .99));
     }
     s += sstride;
     d += dstride;
@@ -85,15 +78,15 @@ static cairo_surface_t *texture_map(cairo_surface_t *src,
 
   return dst;
 }
-#endif
 
 static void
 kemmings (cairo_font_face_t *cr_face, uint32_t gid)
 {
   cairo_t *cr = create_image ();
-  cairo_set_source_rgba (cr, 1, 1, 1, 1);
+  cairo_set_source_rgba (cr, 1, 1, 1, 0);
+  cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
   cairo_paint (cr);
-  cairo_set_source_rgb (cr, 0, 0, 0);
+  cairo_set_source_rgba (cr, 0, 0, 0, 1);
 
   cairo_translate (cr, MARGIN, MARGIN);
   cairo_set_font_face (cr, cr_face);
@@ -104,6 +97,13 @@ kemmings (cairo_font_face_t *cr_face, uint32_t gid)
   glyph.y = SIZE * .8;
 
   cairo_show_glyphs (cr, &glyph, 1);
+
+  for (unsigned int i = 0; i < MARGIN; i++)
+  {
+    cairo_t *new_cr = cairo_create (iterate (cairo_get_target (cr)));
+    cairo_destroy (cr);
+    cr = new_cr;
+  }
 
   cairo_surface_write_to_png (cairo_get_target (cr), "out.png");
   cairo_destroy (cr);
