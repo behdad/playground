@@ -69,7 +69,13 @@ static cairo_surface_t *iterate (cairo_surface_t *src)
 	continue;
       }
 
-      d[x] = min(255., max(s[x] * 1., s[x - 1] * .99));
+      d[x] = min(255.,
+		 max(s[x] * 1.,
+		 max(s[x - 1] * .96,
+		 max(s[x + 1] * .96,
+		 max(s[x + sstride] * .96,
+		 max(s[(int)(x - sstride)] * .96,
+		     0.))))));
     }
     s += sstride;
     d += dstride;
