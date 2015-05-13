@@ -45,24 +45,22 @@ master_colors = [
 (0,1,1),
 ]
 
-family = "NotoSansCJK"
-weights = ["Regular", "DemiLight", "Light", "Thin"]
-ext = "otf"
-
-fonts = [TTFont("%s-%s.%s" % (family, weight, ext)) for weight in weights]
+fontfiles = sys.argv[1:]
+if not fontfiles:
+	print "usage: interpol font1 font2..."
+	sys.exit(1)
+fonts = [TTFont(fontfile) for fontfile in fontfiles]
 glyphsets = [f.getGlyphSet() for f in fonts]
-glyphs = fonts[0].getGlyphOrder()
-assert all(glyphs == f.getGlyphOrder() for f in fonts)
+#glyphs = fonts[0].getGlyphOrder()
+glyphorders = [f.getGlyphOrder() for f in fonts]
+glyphs = [g for g in glyphorders[0] if all(g in glyphorder for glyphorder in glyphorders)]
+#assert all(glyphs == f.getGlyphOrder() for f in fonts)
 
 upem = fonts[0]['head'].unitsPerEm
 ascent = fonts[0]['hhea'].ascent
 descent = -fonts[0]['hhea'].descent
 
-n = 0
-if len(sys.argv) > 1:
-	n = int(sys.argv[1])
-
-for g in glyphs[n:]:
+for g in glyphs:
 	outlines = [glyphset[g] for glyphset in glyphsets]
 	drawings = []
 	widths = []
