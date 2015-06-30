@@ -108,11 +108,12 @@ def build_gx(master_ttfs, master_infos):
 	# Set up named instances
 	instances = {} # None for now
 
-	AddFontVariations(regular, axes, instances)
+	gx = TTFont(master_ttfs[regular_idx])
+	AddFontVariations(gx, axes, instances)
 
 	outname = master_ttfs[regular_idx].replace('-Regular', '')
 	print "Saving GX font", outname
-	regular.save(outname)
+	gx.save(outname)
 
 
 if __name__ == '__main__':
