@@ -7,6 +7,10 @@ import glyphs2ufo.torf
 from fontbuild.convertCurves import glyphCurvesToQuadratic
 from fontbuild.outlineTTF import OutlineTTFCompiler
 from fontTools.ttLib import TTFont
+from fontTools.ttLib.tables._n_a_m_e import NameRecord
+from fontTools.ttLib.tables._f_v_a_r import table__f_v_a_r, Axis, NamedInstance
+from fontTools.ttLib.tables._g_v_a_r import table__g_v_a_r, GlyphVariation
+import warnings
 
 def build_ttfs (src):
 
@@ -45,10 +49,70 @@ def build_ttfs (src):
 
 	return master_ttfs, master_infos
 
+
+def AddName(font, name):
+	"""(font, "Bold") --> NameRecord"""
+	nameTable = font.get("name")
+	namerec = NameRecord()
+	namerec.nameID = 1 + max([n.nameID for n in nameTable.names] + [256])
+	namerec.string = name.encode("mac_roman")
+	namerec.platformID, namerec.platEncID, namerec.langID = (1, 0, 0)
+	nameTable.names.append(namerec)
+	return namerec
+
+def AddFontVariations(font, axes, instances):
+	assert "fvar" not in font
+	fvar = font["fvar"] = table__f_v_a_r()
+
+	for tag in sorted(axes.keys()):
+		axis = Axis()
+		axis.axisTag = tag
+		name, axis.minValue, axis.defaultValue, axis.maxValue = axes[tag]
+		axis.nameID = AddName(font, name).nameID
+		fvar.axes.append(axis)
+
+	for name, coordinates in instances:
+		inst = NamedInstance()
+		inst.nameID = AddName(font, name).nameID
+		inst.coordinates = coordinates
+		fvar.instances.append(inst)
+
 def build_gx(master_ttfs, master_infos):
 	print "Building GX"
 	print "Loading TTF masters"
 	master_fonts = [TTFont(f) for f in master_ttfs]
+
+	# Find Regular master
+	regular_idx = [s.endswith("Regular.ttf") for s in master_ttfs].index(True)
+	print regular_idx
+	regular = master_fonts[regular_idx]
+	regular_weight = float(master_infos[regular_idx]['weightValue'])
+	regular_width = float(master_infos[regular_idx]['widthValue'])
+
+	# Set up master locations
+	master_points = [{'wght': m['weightValue'] / regular_weight,
+			  'wdth': m['widthValue']  / regular_width}
+			 for m in master_infos]
+	weights = [m['wght'] for m in master_points]
+	widths  = [m['wdth'] for m in master_points]
+	from pprint import pprint
+	print "Master positions:"
+	pprint(master_points)
+
+	# Set up axes
+	axes = {
+		'wght': ('Weight', min(weights), weights[regular_idx], max(weights)),
+		'wdth': ('Width',  min(widths),  widths [regular_idx], max(widths)),
+	}
+
+	# Set up named instances
+	instances = {} # None for now
+
+	AddFontVariations(regular, axes, instances)
+
+	outname = master_ttfs[regular_idx].replace('-Regular', '')
+	print "Saving GX font", outname
+	regular.save(outname)
 
 
 if __name__ == '__main__':
@@ -68,4 +132,3 @@ if __name__ == '__main__':
 
 		if not 'gx' in c:
 			c['gx'] = build_gx(c['master_ttfs'], c['master_infos'])
-
