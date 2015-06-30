@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import division
 import glyphs2ufo.torf
 import glyphs2ufo.glyphslib
 import glyphs2ufo.torf
@@ -78,65 +79,117 @@ def AddFontVariations(font, axes, instances):
 		fvar.instances.append(inst)
 
 def GetCoordinates(font, glyphName):
-    """font, glyphName --> glyph coordinates as expected by "gvar" table
+	"""font, glyphName --> glyph coordinates as expected by "gvar" table
 
-    The result includes four "phantom points" for the glyph metrics,
-    as mandated by the "gvar" spec.
-    """
-    glyphTable = font["glyf"]
-    glyph = glyphTable[glyphName]
-    if glyph.isComposite():
-        glyph.recalcBounds(glyphTable)
-        coord = [c.getComponentInfo()[1][-2:] for c in glyph.components]
-    else:
-        coord = [c for c in glyph.getCoordinates(glyphTable)[0].copy()]
-    # Add phantom points for (left, right, top, bottom) positions.
-    horizontalAdvanceWidth, leftSideBearing = font["hmtx"].metrics[glyphName]
+	The result includes four "phantom points" for the glyph metrics,
+	as mandated by the "gvar" spec.
+	"""
+	glyphTable = font["glyf"]
+	if glyphName not in glyphTable.glyphs: return None
+	glyph = glyphTable[glyphName]
+	if glyph.isComposite():
+		coord = [c.getComponentInfo()[1][-2:] for c in glyph.components]
+	else:
+		coord = list(glyph.getCoordinates(glyphTable)[0])
+	# Add phantom points for (left, right, top, bottom) positions.
+	horizontalAdvanceWidth, leftSideBearing = font["hmtx"].metrics[glyphName]
 
-    leftSideX = glyph.xMin - leftSideBearing
-    rightSideX = leftSideX + horizontalAdvanceWidth
+	if not hasattr(glyph, 'xMin'):
+		glyph.recalcBounds(glyphTable)
+	leftSideX = glyph.xMin - leftSideBearing
+	rightSideX = leftSideX + horizontalAdvanceWidth
 
-    # XXX these are incorrect.  Load vmtx and fix.
-    topSideY = glyph.yMax
-    bottomSideY = -glyph.yMin
+	# XXX these are incorrect.  Load vmtx and fix.
+	topSideY = glyph.yMax
+	bottomSideY = -glyph.yMin
 
-    coord.extend([(leftSideX, 0),
-                  (rightSideX, 0),
-                  (0, topSideY),
-                  (0, bottomSideY)])
-    return coord
+	coord.extend([(leftSideX, 0),
+	              (rightSideX, 0),
+	              (0, topSideY),
+	              (0, bottomSideY)])
+	return coord
 
-def AddGlyphVariations(out, masters, locations, neutral):
-    assert "gvar" not in out
-    gvar = out["gvar"] = table__g_v_a_r()
-    gvar.version = 1
-    gvar.reserved = 0
-    gvar.variations = {}
+def sub(al, bl):
+	return [(ax-bx,ay-by) for (ax,ay),(bx,by) in zip(al,bl)]
 
-    return
+def mul(l, mult):
+	return [(x*mult,y*mult) for (x,y) in l]
 
-    for glyph in out.getGlyphOrder():
-        regularCoord = GetCoordinates(regular, glyph)
-        thinCoord = GetCoordinates(thin, glyph)
-        blackCoord = GetCoordinates(black, glyph)
-        if not regularCoord or not blackCoord or not thinCoord:
-            warnings.warn("glyph %s not present in all input fonts" %
-                          glyph)
-            continue
-        if (len(regularCoord) != len(blackCoord) or
-            len(regularCoord) != len(thinCoord)):
-            warnings.warn("glyph %s has not the same number of "
-                          "control points in all input fonts" % glyph)
-            continue
-        thinDelta = []
-        blackDelta = []
-        for ((regX, regY), (blackX, blackY), (thinX, thinY)) in \
-                zip(regularCoord, blackCoord, thinCoord):
-            thinDelta.append(((thinX - regX, thinY - regY)))
-            blackDelta.append((blackX - regX, blackY - regY))
-        thinVar = GlyphVariation({"wght": (-1.0, -1.0, 0.0)}, thinDelta)
-        blackVar = GlyphVariation({"wght": (0.0, 1.0, 1.0)}, blackDelta)
-        gvar.variations[glyph] = [thinVar, blackVar]
+def AddGlyphVariations(out, masters, locations, origin_idx):
+
+	# Make copies for modification
+	masters = masters[:]
+	locations = [l.copy() for l in locations]
+
+	# Move origin to front
+	origin_master   = masters[origin_idx]
+	origin_location = locations[origin_idx]
+	del masters[origin_idx], locations[origin_idx]
+	masters.insert(0, origin_master)
+	locations.insert(0, origin_location)
+	del origin_idx, origin_master, origin_location
+	# Neutral is zero from now on
+
+	axis_tags = locations[0].keys()
+
+	# Normalize locations
+	# https://github.com/behdad/fonttools/issues/313
+	axis_mins = {tag:min(loc[tag] for loc in locations) for tag in axis_tags}
+	axis_maxs = {tag:max(loc[tag] for loc in locations) for tag in axis_tags}
+	axis_defaults = locations[0]
+	for tag in axis_tags:
+		minval,maxval,defaultval = axis_mins[tag],axis_maxs[tag],axis_defaults[tag]
+		for l in locations:
+			v = l[tag]
+			if v == defaultval:
+				v = 0
+			elif v < defaultval:
+				v = (v - defaultval) / (defaultval - minval)
+			else:
+				v = (v - defaultval) / (maxval - defaultval)
+			l[tag] = v
+	del axis_mins, axis_maxs, axis_defaults
+	# Locations are normalized now
+
+	# Find new axis mins and maxs
+	axis_mins = {tag:min(loc[tag] for loc in locations) for tag in axis_tags}
+	axis_maxs = {tag:max(loc[tag] for loc in locations) for tag in axis_tags}
+
+	assert "gvar" not in out
+	gvar = out["gvar"] = table__g_v_a_r()
+	gvar.version = 1
+	gvar.reserved = 0
+	gvar.variations = {}
+
+	for glyph in out.getGlyphOrder():
+
+		allCoords = [GetCoordinates(m, glyph) for m in masters]
+		coordsLen = len(allCoords[0])
+		if (any(len(coords) != coordsLen for coords in allCoords)):
+			warnings.warn("glyph %s has not the same number of "
+			              "control points in all masters" % glyph)
+			continue
+
+		gvar.variations[glyph] = []
+
+		# Subtract origin
+		allCoords = [sub(coords, allCoords[0]) for coords in allCoords]
+
+		# Add deltas for on-axis extremes
+		for tag in axis_tags:
+			for value in (axis_mins[tag], axis_maxs[tag]):
+				if not value: continue
+				loc = locations[0].copy()
+				loc[tag] = value
+				idx = locations.index(loc)
+				loc, coords = locations[idx], allCoords[idx]
+				if not coords:
+					warnings.warn("Glyph not present in a master" + glyph)
+					continue
+
+				# Found master for axis extreme, add delta
+				var = GlyphVariation({tag: (min(value, 0.), value, max(value, 0.))}, coords)
+				gvar.variations[glyph].append(var)
 
 def build_gx(master_ttfs, master_infos):
 	print "Building GX"
