@@ -77,6 +77,35 @@ def AddFontVariations(font, axes, instances):
 		inst.coordinates = coordinates
 		fvar.instances.append(inst)
 
+def GetCoordinates(font, glyphName):
+    """font, glyphName --> glyph coordinates as expected by "gvar" table
+
+    The result includes four "phantom points" for the glyph metrics,
+    as mandated by the "gvar" spec.
+    """
+    glyphTable = font["glyf"]
+    glyph = glyphTable[glyphName]
+    if glyph.isComposite():
+        glyph.recalcBounds(glyphTable)
+        coord = [c.getComponentInfo()[1][-2:] for c in glyph.components]
+    else:
+        coord = [c for c in glyph.getCoordinates(glyphTable)[0].copy()]
+    # Add phantom points for (left, right, top, bottom) positions.
+    horizontalAdvanceWidth, leftSideBearing = font["hmtx"].metrics[glyphName]
+
+    leftSideX = glyph.xMin - leftSideBearing
+    rightSideX = leftSideX + horizontalAdvanceWidth
+
+    # XXX these are incorrect.  Load vmtx and fix.
+    topSideY = glyph.yMax
+    bottomSideY = -glyph.yMin
+
+    coord.extend([(leftSideX, 0),
+                  (rightSideX, 0),
+                  (0, topSideY),
+                  (0, bottomSideY)])
+    return coord
+
 def build_gx(master_ttfs, master_infos):
 	print "Building GX"
 	print "Loading TTF masters"
