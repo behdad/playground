@@ -106,6 +106,38 @@ def GetCoordinates(font, glyphName):
                   (0, bottomSideY)])
     return coord
 
+def AddGlyphVariations(out, masters, locations, neutral):
+    assert "gvar" not in out
+    gvar = out["gvar"] = table__g_v_a_r()
+    gvar.version = 1
+    gvar.reserved = 0
+    gvar.variations = {}
+
+    return
+
+    for glyph in out.getGlyphOrder():
+        regularCoord = GetCoordinates(regular, glyph)
+        thinCoord = GetCoordinates(thin, glyph)
+        blackCoord = GetCoordinates(black, glyph)
+        if not regularCoord or not blackCoord or not thinCoord:
+            warnings.warn("glyph %s not present in all input fonts" %
+                          glyph)
+            continue
+        if (len(regularCoord) != len(blackCoord) or
+            len(regularCoord) != len(thinCoord)):
+            warnings.warn("glyph %s has not the same number of "
+                          "control points in all input fonts" % glyph)
+            continue
+        thinDelta = []
+        blackDelta = []
+        for ((regX, regY), (blackX, blackY), (thinX, thinY)) in \
+                zip(regularCoord, blackCoord, thinCoord):
+            thinDelta.append(((thinX - regX, thinY - regY)))
+            blackDelta.append((blackX - regX, blackY - regY))
+        thinVar = GlyphVariation({"wght": (-1.0, -1.0, 0.0)}, thinDelta)
+        blackVar = GlyphVariation({"wght": (0.0, 1.0, 1.0)}, blackDelta)
+        gvar.variations[glyph] = [thinVar, blackVar]
+
 def build_gx(master_ttfs, master_infos):
 	print "Building GX"
 	print "Loading TTF masters"
@@ -113,7 +145,7 @@ def build_gx(master_ttfs, master_infos):
 
 	# Find Regular master
 	regular_idx = [s.endswith("Regular.ttf") for s in master_ttfs].index(True)
-	print regular_idx
+	print "Using %s as base font" % master_ttfs[regular_idx]
 	regular = master_fonts[regular_idx]
 	regular_weight = float(master_infos[regular_idx]['weightValue'])
 	regular_width = float(master_infos[regular_idx]['widthValue'])
@@ -138,7 +170,12 @@ def build_gx(master_ttfs, master_infos):
 	instances = {} # None for now
 
 	gx = TTFont(master_ttfs[regular_idx])
+
+	print "Setting up axes and instances"
 	AddFontVariations(gx, axes, instances)
+
+	print "Setting up glyph variations"
+	AddGlyphVariations(gx, master_fonts, master_points, regular_idx)
 
 	outname = master_ttfs[regular_idx].replace('-Regular', '')
 	print "Saving GX font", outname
