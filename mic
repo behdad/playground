@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec parec --channels=1 --format=u8 --rate=44100
