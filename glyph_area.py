@@ -1,10 +1,16 @@
 """Calculate the area of a glyph."""
 
+from fontTools.ttLib import TTFont
+from fontTools.pens.basePen import BasePen
+from collections import namedtuple
 
-from robofab.objects.objectsRF import RPoint
-from robofab.world import OpenFont
+def struct (name, members):
+	cls = namedtuple (name, members)
+	cls.__repr__ = lambda self: "%s(%s)" % (name, ','.join(str(s) for s in self))
+	return cls
 
-import sys
+class P (struct ('P', ('x', 'y'))):
+	pass
 
 
 def interpolate(p0, p1, t):
@@ -33,43 +39,36 @@ def cubic_curve_area(p0, p1, p2, p3):
   ) * 0.15
 
 
-def glyph_area(glyph, units_per_em):
-  area = 0
-  for contour in glyph:
-    last_on, off = contour.points[0], []
-    for i in range(len(contour.points)):
-      cur = contour.points[(i + 1) % len(contour.points)]
+class AreaPen(BasePen):
 
-      if cur.type == 'offcurve':
-        off.append(cur)
-        continue
+	def __init__(self, glyphset):
+		BasePen.__init__(self, glyphset)
+		self.area = 0
 
-      if cur.type == 'qcurve':
-        assert len(off), '"qcurve"-type point follows on-curve point'
-        for i in range(len(off) - 1):
-          cur_off, next_off = off[i], off[i + 1]
-          cur_on = interpolate(cur_off, next_off, 0.5)
-          area += quadratic_curve_area(last_on, cur_off, cur_on)
-          area += polygon_area(last_on, cur_on)
-          last_on = cur_on
-        next_off = off[len(off) - 1]
-        area += quadratic_curve_area(last_on, next_off, cur)
+	def _moveTo(self, p0):
+		pass
 
-      elif cur.type == 'curve':
-        assert len(off) == 2, ('"curve"-type point doesn\'t follow exactly two '
-          'off-curve points')
-        area += cubic_curve_area(last_on, off[0], off[1], cur)
+	def _lineTo(self, p1):
+		p0 = self._getCurrentPoint()
+		self.area += polygon_area(P(*p0), P(*p1))
 
-      area += polygon_area(last_on, cur)
-      last_on, off = cur, []
+	def _curveToOne(self, p1, p2, p3):
+		p0 = self._getCurrentPoint()
+		self.area += cubic_curve_area(P(*p0), P(*p1), P(*p2), P(*p3))
+		self.area += polygon_area(P(*p0), P(*p3))
 
-  return abs(area) / (glyph.width * units_per_em)
+
+def glyph_area(glyphset, glyph):
+	pen = AreaPen(glyphset)
+	glyph.draw(pen)
+	return pen.area
 
 
 def main(argv):
   font = OpenFont(argv[1])
-  print glyph_area(font[argv[2]], font.info.unitsPerEm)
+  print glyph_area(font[argv[2]])
 
 
 if __name__ == '__main__':
+  import sys
   main(sys.argv)
