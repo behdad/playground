@@ -91,12 +91,3 @@ def glyph_perimeter(glyphset, glyph):
 	pen = PerimeterPen(glyphset)
 	glyph.draw(pen)
 	return pen.perimeter
-
-def main(argv):
-  font = OpenFont(argv[1])
-  print glyph_area(font[argv[2]])
-
-
-if __name__ == '__main__':
-  import sys
-  main(sys.argv)

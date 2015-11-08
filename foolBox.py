@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from fontTools.ttLib import TTFont
-from glyph_area import *
+from pens import *
 
 def foolAround(glyphs, upem):
 	print 'upem', upem
