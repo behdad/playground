@@ -86,3 +86,31 @@ def pen_value(glyphset, glyph, Pen):
 	pen = Pen(glyphset)
 	glyph.draw(pen)
 	return pen.value
+
+
+class PerContourPen(BasePen):
+
+	def __init__(self, glyphset, Pen):
+		BasePen.__init__(self, glyphset)
+		self._glyphset = glyphset
+		self._Pen = Pen
+		self.value = []
+
+	# XXX port to pen protocol proper
+
+	def _moveTo(self, p0):
+		self.value.append(self._Pen(self._glyphset))
+		self.value[-1].moveTo(p0)
+
+	def _lineTo(self, p1):
+		self.value[-1].lineTo(p1)
+
+	def _curveToOne(self, p1, p2, p3):
+		self.value[-1].curveTo(p1, p2, p3)
+
+
+def per_contours(glyphs, glyph, Pen):
+	def PenClosure(glyphs):
+		return PerContourPen(glyphs, Pen)
+	return pen_value(glyphs, glyph, PenClosure)
+
