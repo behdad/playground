@@ -9,8 +9,8 @@ def foolAround(glyphs, upem):
 		print
 		print "glyph", glyph_name
 		glyph = glyphs[glyph_name]
-		area = glyph_area(glyphs, glyph)
-		peri = glyph_perimeter(glyphs, glyph)
+		area = pen_value(glyphs, glyph, AreaPen)
+		peri = pen_value(glyphs, glyph, PerimeterPen)
 		stem = area / peri
 		print "stem %g area %g peri %g" % (stem, area, peri)
 

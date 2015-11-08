@@ -47,47 +47,42 @@ class AreaPen(BasePen):
 
 	def __init__(self, glyphset):
 		BasePen.__init__(self, glyphset)
-		self.area = 0
+		self.value = 0
 
 	def _moveTo(self, p0):
 		pass
 
 	def _lineTo(self, p1):
 		p0 = self._getCurrentPoint()
-		self.area += polygon_area(P(*p0), P(*p1))
+		self.value += polygon_area(P(*p0), P(*p1))
 
 	def _curveToOne(self, p1, p2, p3):
 		p0 = self._getCurrentPoint()
-		self.area += cubic_curve_area(P(*p0), P(*p1), P(*p2), P(*p3))
-		self.area += polygon_area(P(*p0), P(*p3))
-
-def glyph_area(glyphset, glyph):
-	pen = AreaPen(glyphset)
-	glyph.draw(pen)
-	return pen.area
+		self.value += cubic_curve_area(P(*p0), P(*p1), P(*p2), P(*p3))
+		self.value += polygon_area(P(*p0), P(*p3))
 
 
 class PerimeterPen(BasePen):
 
 	def __init__(self, glyphset):
 		BasePen.__init__(self, glyphset)
-		self.perimeter = 0
+		self.value = 0
 
 	def _moveTo(self, p0):
 		pass
 
 	def _lineTo(self, p1):
 		p0 = self._getCurrentPoint()
-		self.perimeter += distance(P(*p0), P(*p1))
+		self.value += distance(P(*p0), P(*p1))
 
 	def _curveToOne(self, p1, p2, p3):
 		p0 = self._getCurrentPoint()
 		# TODO very rudimentary hack
 		arch = distance(P(*p0), P(*p3))
 		box = distance(P(*p0), P(*p1)) + distance(P(*p1), P(*p2)) + distance(P(*p2), P(*p3))
-		self.perimeter += (arch + box) / 2.
+		self.value += (arch + box) / 2.
 
-def glyph_perimeter(glyphset, glyph):
-	pen = PerimeterPen(glyphset)
+def pen_value(glyphset, glyph, Pen):
+	pen = Pen(glyphset)
 	glyph.draw(pen)
-	return pen.perimeter
+	return pen.value
