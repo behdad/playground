@@ -1,16 +1,18 @@
 #!/usr/bin/python
 
 from fontTools.ttLib import TTFont
-from glyph_area import glyph_area
+from glyph_area import *
 
 def foolAround(glyphs, upem):
 	print 'upem', upem
-	for glyph_name in ['e', 'o', 'I', 'slash']:
+	for glyph_name in ['e', 'o', 'I', 'slash', 'E', 'zero', 'eight']:
 		print
 		print "glyph", glyph_name
 		glyph = glyphs[glyph_name]
 		area = glyph_area(glyphs, glyph)
-		print "area", area
+		peri = glyph_perimeter(glyphs, glyph)
+		stem = area / peri
+		print "stem %g area %g peri %g" % (stem, area, peri)
 
 def main(argv):
 	for filename in argv[1:]:

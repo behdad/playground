@@ -1,5 +1,6 @@
 """Calculate the area of a glyph."""
 
+import math
 from fontTools.ttLib import TTFont
 from fontTools.pens.basePen import BasePen
 from collections import namedtuple
@@ -13,8 +14,11 @@ class P (struct ('P', ('x', 'y'))):
 	pass
 
 
+def distance(p0, p1):
+  return math.hypot(p0.x - p1.x, p0.y - p1.y)
+
 def interpolate(p0, p1, t):
-  return RPoint(p0.x * (1 - t) + p1.x * t, p0.y * (1 - t) + p1.y * t)
+  return P(p0.x * (1 - t) + p1.x * t, p0.y * (1 - t) + p1.y * t)
 
 
 def polygon_area(p0, p1):
@@ -57,12 +61,36 @@ class AreaPen(BasePen):
 		self.area += cubic_curve_area(P(*p0), P(*p1), P(*p2), P(*p3))
 		self.area += polygon_area(P(*p0), P(*p3))
 
-
 def glyph_area(glyphset, glyph):
 	pen = AreaPen(glyphset)
 	glyph.draw(pen)
 	return pen.area
 
+
+class PerimeterPen(BasePen):
+
+	def __init__(self, glyphset):
+		BasePen.__init__(self, glyphset)
+		self.perimeter = 0
+
+	def _moveTo(self, p0):
+		pass
+
+	def _lineTo(self, p1):
+		p0 = self._getCurrentPoint()
+		self.perimeter += distance(P(*p0), P(*p1))
+
+	def _curveToOne(self, p1, p2, p3):
+		p0 = self._getCurrentPoint()
+		# TODO very rudimentary hack
+		arch = distance(P(*p0), P(*p3))
+		box = distance(P(*p0), P(*p1)) + distance(P(*p1), P(*p2)) + distance(P(*p2), P(*p3))
+		self.perimeter += (arch + box) / 2.
+
+def glyph_perimeter(glyphset, glyph):
+	pen = PerimeterPen(glyphset)
+	glyph.draw(pen)
+	return pen.perimeter
 
 def main(argv):
   font = OpenFont(argv[1])
