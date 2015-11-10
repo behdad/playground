@@ -63,7 +63,7 @@ if False:
 def showcase_slide(fonts, texts,
 		   guides = [90, 60, 30, -30],
 		   direction=None,
-		   show=True,
+		   fill=True,
 		   stroke=True,
 		   counters=False):
 
@@ -131,11 +131,14 @@ def showcase_slide(fonts, texts,
 				3: [(1,0,0),(0,0,1),(0,1,0)],
 				}[len(texts)][it]
 
-				r.move_to (x, y)
-				if show:
+				if fill:
+					r.move_to (x, y)
 					r.set_source_rgba (color[0],color[1],color[2],.5)
-					r.show_layout_line(l.get_line(0))
+					#r.show_layout_line(l.get_line(0))
+					r.layout_line_path(l.get_line(0))
+					r.fill()
 				if stroke:
+					r.move_to (x, y)
 					r.set_source_rgba (color[0],color[1],color[2],.8)
 					r.layout_line_path(l.get_line(0))
 					r.stroke()
