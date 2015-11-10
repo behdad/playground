@@ -60,9 +60,11 @@ if False:
 	flkasjd flkajsd flaksdj f
 	""")
 
-def showcase_slide(fonts, text, guides = [90, 60, 30, -30]):
+def showcase_slide(fonts, texts, guides = [90, 60, 30, -30], direction=None):
 
 	pageno = 1 + len(slides)
+	if type(fonts) not in [list, tuple]: fonts = [fonts]
+	if type(texts) not in [list, tuple]: texts = [texts]
 
 	def closure(r):
 		r.move_to(400, 595)
@@ -70,43 +72,62 @@ def showcase_slide(fonts, text, guides = [90, 60, 30, -30]):
 
 		width = None#800
 		l = r.create_layout('')
-		#tb = pango.TabArray (1, True)
-		#tb.set_tab (0, pango.TAB_LEFT, 120)
-		#l.set_tabs(tb)
-		l.set_text(text)
-		num = len(fonts)
-		lsize = (600 - 2*20) / num
-		for i,f in enumerate(fonts):
+		tb = pango.TabArray (1, True)
+		ntabs = len([x for x in texts[0] if x == '\t'])
+		tb.set_tab (0, pango.TAB_LEFT, int(700 / (1 + ntabs)))
+		l.set_tabs(tb)
+		if direction is not None:
+			l.set_auto_dir(False)
+			l.get_context().set_base_dir(direction)
 
-			size = lsize * .6
-			l.set_font_description (pango.FontDescription(f + " %g"%size))
-			ink,logical = l.get_extents()
+		for it,text in enumerate(texts):
+			l.set_text(text)
+			num = len(fonts)
+			lsize = (600 - 2*20) / num
+			for i,f in enumerate(fonts):
 
-			if width is None:
-				width = logical[2]/pango.SCALE
+				size = lsize * .6
+				l.set_font_description (pango.FontDescription(f + " %g"%size))
+				ink,logical = l.get_extents()
 
-			size *= width / (logical[2]/pango.SCALE)
-			l.set_font_description (pango.FontDescription(f + " %g"%size))
-			ink,logical = l.get_extents()
+				if width is None:
+					width = logical[2]/pango.SCALE
 
-			x = (800 - width) / 2
-			y = 20 + (i + .6) * lsize
-			r.set_line_width (1)
+				size *= width / (logical[2]/pango.SCALE)
+				l.set_font_description (pango.FontDescription(f + " %g"%size))
+				ink,logical = l.get_extents()
 
-			r.move_to (x - 30, y)
-			r.line_to (x + width + 30, y)
-			r.set_source_rgb (.6, .6, .6)
-			r.stroke ()
+				if direction is None:
+					x = (800 - width) / 2
+				else:
+					if direction == pango.DIRECTION_LTR:
+						x = 50
+					else:
+						x = 750 - width
 
-			for g in guides:
-				r.move_to (x - 30, y - g)
-				r.line_to (x + width + 30, y - g)
-				r.set_source_rgb (.8, .8, .8)
-				r.stroke ()
+				y = 20 + (i + .6) * lsize
+				r.set_line_width (1)
 
-			r.set_source_rgb (.2, .2, .2)
-			r.move_to (x, y)
-			r.show_layout_line(l.get_line(0))
+				if it == 0:
+					r.move_to (x - 30, y)
+					r.line_to (x + width + 30, y)
+					r.set_source_rgb (.6, .6, .6)
+					r.stroke ()
+
+					for g in guides:
+						r.move_to (x - 30, y - g)
+						r.line_to (x + width + 30, y - g)
+						r.set_source_rgb (.8, .8, .8)
+						r.stroke ()
+
+				color = {
+				1: [(.2,.2,.2,1.)],
+				2: [(1,0,0,.5),(0,0,1,.5)],
+				}[len(texts)][it]
+				r.set_source_rgba (*color)
+
+				r.move_to (x, y)
+				r.show_layout_line(l.get_line(0))
 
 		r.set_allocation(0,0,800,600)
 	slide(closure)
@@ -127,15 +148,21 @@ showcase_slide(fonts, "د ‍د ر ‍ر و ‍و")
 showcase_slide(fonts, "ذ ‍ذ ز ‍ز ژ ‍ژ")
 showcase_slide(fonts, "ک ک‍ ‍ک ‍ک‍")
 showcase_slide(fonts, "گ گ‍ ‍گ ‍گ‍")
+showcase_slide(fonts, "ح ح‍ ‍ح ‍ح‍")
+showcase_slide(fonts, "ج ج‍ ‍ج ‍ج‍")
+showcase_slide(fonts, "خ خ‍ ‍خ ‍خ‍")
 showcase_slide(fonts, "چ چ‍ ‍چ ‍چ‍")
 showcase_slide(fonts, "‍و و‍ چ‍ ‍چ ‍چ‍")
 showcase_slide(fonts, "غ غ‍ ‍غ ‍غ‍")
+showcase_slide(fonts, "ه ه‍ ‍ه ‍ه‍")
 showcase_slide(fonts, "با یا پا")
 showcase_slide(fonts, "لا ‍لا")
+showcase_slide(fonts, "ی ‍ی")
 showcase_slide(fonts, "م م‍ ‍م ‍م‍")
 showcase_slide(fonts, "آ ا لا  للل کگ")
 showcase_slide(fonts, "گ ققق‌ق ففف‌ف")
 showcase_slide(fonts, "۰۱۲۳۴۵۶۷۸۹")
+showcase_slide(fonts, "سلام، برو.")
 
 fonts = [sans, naskh]
 
@@ -144,7 +171,11 @@ showcase_slide(fonts, "تواناتر")
 showcase_slide(fonts, "سرافراز")
 showcase_slide(fonts, "سیبپببر")
 showcase_slide(fonts, "سیستم")
-showcase_slide(fonts, "د ‍د ر ‍ر")
+showcase_slide(fonts, "‍دد ‍رر ‍وو")
+showcase_slide(fonts, "د	ر	و", direction=pango.DIRECTION_LTR)
+showcase_slide(fonts, "‍د	‍ر	‍و", direction=pango.DIRECTION_LTR)
+for f in fonts:
+	showcase_slide(f, ["‍د	‍ر	‍و", "د	ر	و"], direction=pango.DIRECTION_LTR)
 
 if __name__ == "__main__":
 
