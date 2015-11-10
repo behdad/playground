@@ -60,7 +60,12 @@ if False:
 	flkasjd flkajsd flaksdj f
 	""")
 
-def showcase_slide(fonts, texts, guides = [90, 60, 30, -30], direction=None):
+def showcase_slide(fonts, texts,
+		   guides = [90, 60, 30, -30],
+		   direction=None,
+		   show=True,
+		   stroke=True,
+		   counters=False):
 
 	pageno = 1 + len(slides)
 	if type(fonts) not in [list, tuple]: fonts = [fonts]
@@ -108,7 +113,7 @@ def showcase_slide(fonts, texts, guides = [90, 60, 30, -30], direction=None):
 				y = 20 + (i + .6) * lsize
 				r.set_line_width (1)
 
-				if it == 0:
+				if it == 0 and guides is not None:
 					r.move_to (x - 30, y)
 					r.line_to (x + width + 30, y)
 					r.set_source_rgb (.6, .6, .6)
@@ -121,13 +126,19 @@ def showcase_slide(fonts, texts, guides = [90, 60, 30, -30], direction=None):
 						r.stroke ()
 
 				color = {
-				1: [(.2,.2,.2,1.)],
-				2: [(1,0,0,.5),(0,0,1,.5)],
+				1: [(0,0,0)],
+				2: [(1,0,0),(0,0,1)],
+				3: [(1,0,0),(0,0,1),(0,1,0)],
 				}[len(texts)][it]
-				r.set_source_rgba (*color)
 
 				r.move_to (x, y)
-				r.show_layout_line(l.get_line(0))
+				if show:
+					r.set_source_rgba (color[0],color[1],color[2],.5)
+					r.show_layout_line(l.get_line(0))
+				if stroke:
+					r.set_source_rgba (color[0],color[1],color[2],.8)
+					r.layout_line_path(l.get_line(0))
+					r.stroke()
 
 		r.set_allocation(0,0,800,600)
 	slide(closure)
@@ -141,6 +152,7 @@ nassim = 'bbc nassim'
 
 fonts = [sans, naskh, nazli, mitra]
 
+showcase_slide(fonts, "م م‍ ‍م ‍م‍", counters=True)
 showcase_slide(fonts, "ل ن س ی چ غ ور")
 showcase_slide(fonts, "‍ل ‍ن ‍س ‍ی ‍چ ‍غ ‍و‍ر")
 showcase_slide(fonts, "ل ‍ل ن ‍ن ی ‍ی")
