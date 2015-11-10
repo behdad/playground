@@ -160,9 +160,13 @@ showcase_slide(fonts, "لا ‍لا")
 showcase_slide(fonts, "ی ‍ی")
 showcase_slide(fonts, "م م‍ ‍م ‍م‍")
 showcase_slide(fonts, "آ ا لا  للل کگ")
-showcase_slide(fonts, "گ ققق‌ق ففف‌ف")
+showcase_slide(fonts, "ققق‌ق ففف‌ف")
 showcase_slide(fonts, "۰۱۲۳۴۵۶۷۸۹")
 showcase_slide(fonts, "سلام، برو.")
+showcase_slide(fonts, "چ	چ‍", direction=pango.DIRECTION_LTR)
+showcase_slide(fonts, "‍چ	‍چ‍", direction=pango.DIRECTION_LTR)
+for f in fonts:
+	showcase_slide(f, ["‍چ	‍چ‍", "چ	چ‍"], direction=pango.DIRECTION_LTR)
 
 fonts = [sans, naskh]
 
