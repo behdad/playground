@@ -120,16 +120,20 @@ nassim = 'bbc nassim'
 
 fonts = [sans, naskh, nazli, mitra]
 
-showcase_slide(fonts, "ل ن س ی چ و ر")
-showcase_slide(fonts, "‍ل ‍ن ‍س ‍ی ‍چ ‍و ‍ر")
+showcase_slide(fonts, "ل ن س ی چ غ ور")
+showcase_slide(fonts, "‍ل ‍ن ‍س ‍ی ‍چ ‍غ ‍و‍ر")
 showcase_slide(fonts, "ل ‍ل ن ‍ن ی ‍ی")
 showcase_slide(fonts, "د ‍د ر ‍ر و ‍و")
+showcase_slide(fonts, "ذ ‍ذ ز ‍ز ژ ‍ژ")
 showcase_slide(fonts, "ک ک‍ ‍ک ‍ک‍")
 showcase_slide(fonts, "گ گ‍ ‍گ ‍گ‍")
 showcase_slide(fonts, "چ چ‍ ‍چ ‍چ‍")
+showcase_slide(fonts, "‍و و‍ چ‍ ‍چ ‍چ‍")
+showcase_slide(fonts, "غ غ‍ ‍غ ‍غ‍")
 showcase_slide(fonts, "با یا پا")
+showcase_slide(fonts, "لا ‍لا")
 showcase_slide(fonts, "م م‍ ‍م ‍م‍")
-showcase_slide(fonts, "آ ا للل کگ")
+showcase_slide(fonts, "آ ا لا  للل کگ")
 showcase_slide(fonts, "گ ققق‌ق ففف‌ف")
 showcase_slide(fonts, "۰۱۲۳۴۵۶۷۸۹")
 
