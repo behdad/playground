@@ -60,11 +60,90 @@ if False:
 	flkasjd flkajsd flaksdj f
 	""")
 
+def group2(iterable):
+	it = iter(iterable)
+	while True:
+		yield next(it),next(it)
+
+def filter_path_keep_counters(r):
+	path = r.copy_path()
+	lpath = list(path)
+	# Calc total area, so we know font winding direction
+	area = 0
+	for op,coords in lpath:
+		if op == 0: # moveto
+			lx,ly = coords
+			continue
+		for x,y in group2(coords):
+			area += (x-lx) * (y+ly) / 2.
+			lx,ly = x,y
+	total_area = area
+
+	# Record counters
+	all_ops = []
+	all_coords = []
+	for i,(op,coords) in enumerate(lpath):
+		if op == 0: # moveto
+			mx,my = coords
+			lx,ly = mx,my
+			area = 0
+			start = i
+			continue
+		for x,y in group2(coords):
+			area += (x-lx) * (y+ly) / 2.
+			lx,ly = x,y
+		if op == 3: # closepath
+			x,y = mx,my
+			area += (x-lx) * (y+ly) / 2.
+			if (area < 0) != (total_area < 0):
+				for vop,vcoords in lpath[start:i+1]:
+					all_ops.append(vop)
+					all_coords.extend(vcoords)
+
+	# Reverse contours
+	new_ops = []
+	new_coords = []
+	points = reversed(list(group2(all_coords)))
+	for op in reversed(all_ops):
+		if op == 0: # moveto
+			op = 3 # closepath
+			args = 1
+		elif op == 1: # lineto
+			args = 1
+		elif op == 2: # curveto
+			args = 3
+		elif op == 3: # closepath
+			op = 0 # move_to
+			args = 0
+
+		new_ops.append(op)
+		for i in range(args):
+			p = next(points)
+			new_coords.extend(p)
+
+	r.new_path()
+
+	it = iter(new_coords)
+	for op in new_ops:
+		func,nargs = {
+		0: ('move_to', 1),
+		1: ('line_to', 1),
+		2: ('curve_to', 3),
+		3: ('close_path', 0),
+		}[op]
+
+		args = []
+		for i in range(2*nargs):
+			args.append(next(it))
+
+		getattr(r, func)(*args)
+	#r.append_path(path)
+
 def showcase_slide(fonts, texts,
 		   guides = [90, 60, 30, -30],
 		   direction=None,
-		   fill=True,
-		   stroke=True,
+		   fill=.4,
+		   stroke=.8,
 		   counters=False):
 
 	pageno = 1 + len(slides)
@@ -133,15 +212,21 @@ def showcase_slide(fonts, texts,
 
 				if fill:
 					r.move_to (x, y)
-					r.set_source_rgba (color[0],color[1],color[2],.5)
+					r.set_source_rgba (color[0],color[1],color[2],float(fill))
 					#r.show_layout_line(l.get_line(0))
 					r.layout_line_path(l.get_line(0))
 					r.fill()
 				if stroke:
 					r.move_to (x, y)
-					r.set_source_rgba (color[0],color[1],color[2],.8)
 					r.layout_line_path(l.get_line(0))
+					r.set_source_rgba (color[0],color[1],color[2],float(stroke))
 					r.stroke()
+				if counters:
+					r.move_to (x, y)
+					r.layout_line_path(l.get_line(0))
+					filter_path_keep_counters(r)
+					r.set_source_rgba (1,0,0,float(counters))
+					r.fill()
 
 		r.set_allocation(0,0,800,600)
 	slide(closure)
@@ -155,7 +240,6 @@ nassim = 'bbc nassim'
 
 fonts = [sans, naskh, nazli, mitra]
 
-showcase_slide(fonts, "م م‍ ‍م ‍م‍", counters=True)
 showcase_slide(fonts, "ل ن س ی چ غ ور")
 showcase_slide(fonts, "‍ل ‍ن ‍س ‍ی ‍چ ‍غ ‍و‍ر")
 showcase_slide(fonts, "ل ‍ل ن ‍ن ی ‍ی")
@@ -168,14 +252,25 @@ showcase_slide(fonts, "ج ج‍ ‍ج ‍ج‍")
 showcase_slide(fonts, "خ خ‍ ‍خ ‍خ‍")
 showcase_slide(fonts, "چ چ‍ ‍چ ‍چ‍")
 showcase_slide(fonts, "‍و و‍ چ‍ ‍چ ‍چ‍")
+
 showcase_slide(fonts, "غ غ‍ ‍غ ‍غ‍")
+
+fonts = [sans, naskh]
+showcase_slide(fonts, "‍غ ‍غ‍", counters=True)
+showcase_slide(fonts, "‍غ ‍غ‍", counters=True, fill=False, stroke=False, guides=None)
+fonts = [sans, naskh, nazli, mitra]
+
 showcase_slide(fonts, "ه ه‍ ‍ه ‍ه‍")
 showcase_slide(fonts, "با یا پا")
 showcase_slide(fonts, "لا ‍لا")
 showcase_slide(fonts, "ی ‍ی")
 showcase_slide(fonts, "م م‍ ‍م ‍م‍")
+showcase_slide(fonts, "م م‍ ‍م ‍م‍", counters=True)
+showcase_slide(fonts, "م م‍ ‍م ‍م‍", counters=True, fill=False, stroke=False, guides=None)
 showcase_slide(fonts, "آ ا لا  للل کگ")
 showcase_slide(fonts, "ققق‌ق ففف‌ف")
+showcase_slide(fonts, "ققق‌ق ففف‌ف", counters=True)
+showcase_slide(fonts, "ققق‌ق ففف‌ف", counters=True, fill=False, stroke=False, guides=None)
 showcase_slide(fonts, "۰۱۲۳۴۵۶۷۸۹")
 showcase_slide(fonts, "سلام، برو.")
 showcase_slide(fonts, "چ	چ‍", direction=pango.DIRECTION_LTR)
