@@ -164,6 +164,7 @@ def showcase_slide(fonts, texts,
 			l.set_auto_dir(False)
 			l.get_context().set_base_dir(direction)
 
+		font_size = {}
 		for it,text in enumerate(texts):
 			l.set_text(text)
 			num = len(fonts)
@@ -177,7 +178,11 @@ def showcase_slide(fonts, texts,
 				if width is None:
 					width = logical[2]/pango.SCALE
 
-				size *= width / (logical[2]/pango.SCALE)
+				if f not in font_size:
+					size *= width / (logical[2]/pango.SCALE)
+					font_size[f] = size
+				else:
+					size = font_size[f]
 				l.set_font_description (pango.FontDescription(f + " %g"%size))
 				ink,logical = l.get_extents()
 
