@@ -25,6 +25,11 @@
 
 from __future__ import division
 
+import os
+import os.path
+fonts_conf = os.path.abspath(os.path.join ('.', "fonts.conf"))
+os.putenv("FONTCONFIG_FILE", fonts_conf)
+
 slides = []
 def slide(f, data=None, width=800, height=600):
 	if data is None: data = {}
@@ -60,7 +65,7 @@ if False:
 	flkasjd flkajsd flaksdj f
 	""")
 
-text_slide("", """Comparative review of Noto Sans Arabic, Noto Naskh Arabic, and Microsoft Uighur.""")
+#text_slide("", """Comparative review of Noto Sans Arabic, Noto Naskh Arabic, and Microsoft Uighur.""")
 
 def group2(iterable):
 	it = iter(iterable)
@@ -239,6 +244,7 @@ def showcase_slide(fonts, texts,
 	slide(closure)
 
 sans = 'Arabic Sans BR'
+sans2 = 'Arabic Sans BU'
 naskh = 'Noto Naskh Arabic'
 nazli = 'nazli'
 mitra = 'bmitra'
@@ -247,7 +253,8 @@ nassim = 'bbc nassim'
 msuighur = 'microsoft uighur'
 
 #base_fonts = [sans, naskh, nazli, msuighur]
-base_fonts = [sans, naskh, msuighur]
+#base_fonts = [sans, naskh, msuighur]
+base_fonts = [sans, sans2, naskh]
 
 fonts = base_fonts
 
@@ -302,11 +309,6 @@ for f in fonts:
 	showcase_slide(f, ["‍د	‍ر	‍و", "د	ر	و"], direction=pango.DIRECTION_LTR)
 
 if __name__ == "__main__":
-
-	import os
-	import os.path
-	fonts_conf = os.path.abspath(os.path.join (os.path.dirname(__file__), "fonts.conf"))
-	os.putenv("FONTCONFIG_FILE", fonts_conf)
 
 	import slippy
 	import theme
