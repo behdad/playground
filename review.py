@@ -308,6 +308,9 @@ showcase_slide(fonts, "‍د	‍ر	‍و", direction=pango.DIRECTION_LTR)
 for f in fonts:
 	showcase_slide(f, ["‍د	‍ر	‍و", "د	ر	و"], direction=pango.DIRECTION_LTR)
 
+showcase_slide(fonts, "متــرو")
+showcase_slide(fonts, "بئ‌بئابؤیِ")
+
 if __name__ == "__main__":
 
 	import slippy
