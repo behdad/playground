@@ -60,6 +60,8 @@ if False:
 	flkasjd flkajsd flaksdj f
 	""")
 
+text_slide("", """Comparative review of Noto Sans Arabic, Noto Naskh Arabic, and Microsoft Uighur.""")
+
 def group2(iterable):
 	it = iter(iterable)
 	while True:
@@ -242,11 +244,15 @@ nazli = 'nazli'
 mitra = 'bmitra'
 roya = 'roya'
 nassim = 'bbc nassim'
+msuighur = 'microsoft uighur'
 
-fonts = [sans, naskh, nazli, mitra]
+#base_fonts = [sans, naskh, nazli, msuighur]
+base_fonts = [sans, naskh, msuighur]
 
-showcase_slide(fonts, "ل ن س ی چ غ ور")
-showcase_slide(fonts, "‍ل ‍ن ‍س ‍ی ‍چ ‍غ ‍و‍ر")
+fonts = base_fonts
+
+showcase_slide(fonts, "ل‌ن‌س‌ی‌چ‌غ‌ور")
+showcase_slide(fonts, "‍ل‌‍ن‌‍س‌‍ی‌‍چ‌‍غ‌‍و‍ر")
 showcase_slide(fonts, ["‍ل	‍ن	‍ی", "ل	ن	ی"], direction=pango.DIRECTION_LTR)
 showcase_slide(fonts, "د ‍د ر ‍ر و ‍و")
 showcase_slide(fonts, "ذ ‍ذ ز ‍ز ژ ‍ژ")
@@ -260,10 +266,8 @@ showcase_slide(fonts, "‍و و‍ چ‍ ‍چ ‍چ‍")
 
 showcase_slide(fonts, "غ غ‍ ‍غ ‍غ‍")
 
-fonts = [sans, naskh]
 showcase_slide(fonts, "‍غ ‍غ‍", counters=True)
 showcase_slide(fonts, "‍غ ‍غ‍", counters=True, fill=False, stroke=False, guides=None)
-fonts = [sans, naskh, nazli, mitra]
 
 showcase_slide(fonts, "ه ه‍ ‍ه ‍ه‍")
 showcase_slide(fonts, "با یا پا")
@@ -284,7 +288,7 @@ showcase_slide(fonts, ["‍چ	‍چ‍","چ	چ‍"], direction=pango.DIRECTION_L
 for f in fonts:
 	showcase_slide(f, ["‍چ	‍چ‍", "چ	چ‍"], direction=pango.DIRECTION_LTR)
 
-fonts = [sans, naskh]
+#fonts = [sans, naskh]
 
 showcase_slide(fonts, "مالم‌مللم")
 showcase_slide(fonts, "تواناتر")
