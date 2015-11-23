@@ -1,7 +1,6 @@
 """Calculate the area of a glyph."""
 
 import math
-from fontTools.ttLib import TTFont
 from fontTools.pens.basePen import BasePen
 from collections import namedtuple
 
