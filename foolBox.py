@@ -32,7 +32,7 @@ def foolAround(glyphs, upem):
 			stem_aware = (-b - math.sqrt(delta)) / (2*a)
 		else:
 			stem_aware = -c / b
-		print "stem1 %g" % stem_aware
+		print "stem1 %g topology %d" % (stem_aware, a)
 
 def main(argv):
 	for filename in argv[1:]:
