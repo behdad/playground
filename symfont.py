@@ -58,6 +58,8 @@ ymom1_f = lambdify(ymom1)
 ymean_f = lambda P: ymom1_f(P) / area_f(P)
 print "ymean", ymean_f
 
+# https://en.wikipedia.org/wiki/Second_moment_of_area
+
 xmom2 = green(x**2)
 xmom2_f = lambdify(xmom2)
 def xvar_f(P):
@@ -88,6 +90,7 @@ print "yvar", yvar_f
 xymom = green(x * y)
 xymom_f = lambdify(xymom)
 def corr_f(P):
+	# https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient
 	#  Covar(X,Y) = ( E[X.Y] - E[X]E[Y] ) / (sigma_X.sigma_Y)
 	area = area_f(P)
 	xmom1 = xmom1_f(P)
