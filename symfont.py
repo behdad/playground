@@ -61,26 +61,31 @@ def getGreenBezierFuncs(func):
 
 class GreenPen(BasePen):
 
-	def __init__(self, glyphset, func):
+	def __init__(self, glyphset, func, scale=1):
 		BasePen.__init__(self, glyphset)
 		self._funcs = getGreenBezierFuncs(func)
+		self._scale = scale
 		self.value = 0
 
+	def _segment(self, *P):
+		scale = self._scale
+		P = tuple((x/scale,y/scale) for x,y in P)
+		self.value += self._funcs[len(P) - 1](P)
+
 	def _moveTo(self, p0):
-		self.value += self._funcs[0]((p0,))
-		pass
+		self._segment(p0)
 
 	def _lineTo(self, p1):
 		p0 = self._getCurrentPoint()
-		self.value += self._funcs[1]((p0, p1))
+		self._segment(p0,p1)
 
 	def _qCurveToOne(self, p1, p2):
 		p0 = self._getCurrentPoint()
-		self.value += self._funcs[2]((p0, p1, p2))
+		self._segment(p0,p1,p2)
 
 	def _curveToOne(self, p1, p2, p3):
 		p0 = self._getCurrentPoint()
-		self.value += self._funcs[3]((p0, p1, p2, p3))
+		self._segment(p0,p1,p2,p3)
 
 
 b = ((0,0), (0,1), (1,1), (1,0))
@@ -106,21 +111,21 @@ class GlyphStatistics(object):
 		self._glyphset = glyphset
 		self._scale = scale
 
-	def _penAttr(self, attr, scaleOrder):
+	def _penAttr(self, attr):
 		internalName = '_'+attr
 		if internalName not in self.__dict__:
 			Pen = globals()[attr+'Pen']
-			pen = Pen(self._glyphset)
+			pen = Pen(self._glyphset, scale=self._scale)
 			self._glyph.draw(pen)
-			self.__dict__[internalName] = pen.value / (self._scale ** scaleOrder)
+			self.__dict__[internalName] = pen.value
 		return self.__dict__[internalName]
 
-	Area = property(partial(_penAttr, attr='Area', scaleOrder=2))
-	Moment1X = property(partial(_penAttr, attr='Moment1X', scaleOrder=1))
-	Moment1Y = property(partial(_penAttr, attr='Moment1Y', scaleOrder=1))
-	Moment2XX = property(partial(_penAttr, attr='Moment2XX', scaleOrder=0))
-	Moment2YY = property(partial(_penAttr, attr='Moment2YY', scaleOrder=0))
-	Moment2XY = property(partial(_penAttr, attr='Moment2XY', scaleOrder=0))
+	Area = property(partial(_penAttr, attr='Area'))
+	Moment1X = property(partial(_penAttr, attr='Moment1X'))
+	Moment1Y = property(partial(_penAttr, attr='Moment1Y'))
+	Moment2XX = property(partial(_penAttr, attr='Moment2XX'))
+	Moment2YY = property(partial(_penAttr, attr='Moment2YY'))
+	Moment2XY = property(partial(_penAttr, attr='Moment2XY'))
 
 	# Center of mass
 	# https://en.wikipedia.org/wiki/Center_of_mass#A_continuous_volume
