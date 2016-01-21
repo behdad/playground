@@ -162,7 +162,9 @@ class GlyphStatistics(object):
 	# https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient
 	@property
 	def Correlation(self):
-		return self.Covariance / (self.StdDevX * self.StdDevY)
+		corr = self.Covariance / (self.StdDevX * self.StdDevY)
+		if abs(corr) < 1e-4: corr = 0
+		return corr
 
 
 def test(glyphset, upem):
