@@ -1,6 +1,9 @@
-"""Calculate the area of a glyph."""
+from __future__ import print_function, division, absolute_import
+from fontTools.misc.py23 import *
 
 import sympy as sp
+from fontTools.pens.basePen import BasePen
+from functools import partial
 
 n = 3 # Max Bezier degree; 3 for cubic, 2 for quadratic
 
@@ -35,6 +38,51 @@ def green(f, Bezier=BezierCurve[n]):
 def lambdify(f):
 	return sp.lambdify(Psymbol, f)
 
+class BezierFuncs(object):
+
+	def __init__(self, symfunc):
+		self._symfunc = symfunc
+		self._bezfuncs = {}
+
+	def __getitem__(self, i):
+		if i not in self._bezfuncs:
+			self._bezfuncs[i] = lambdify(green(self._symfunc, Bezier=BezierCurve[i]))
+		return self._bezfuncs[i]
+
+_BezierFuncs = {}
+
+def getGreenBezierFuncs(func):
+	func = sp.sympify(func)
+	funcstr = str(func)
+	global _BezierFuncs
+	if not funcstr in _BezierFuncs:
+		_BezierFuncs[funcstr] = BezierFuncs(func)
+	return _BezierFuncs[funcstr]
+
+class GreenPen(BasePen):
+
+	def __init__(self, glyphset, func):
+		BasePen.__init__(self, glyphset)
+		self._funcs = getGreenBezierFuncs(func)
+		self.value = 0
+
+	def _moveTo(self, p0):
+		self.value += self._funcs[0]((p0,))
+		pass
+
+	def _lineTo(self, p1):
+		p0 = self._getCurrentPoint()
+		self.value += self._funcs[1]((p0, p1))
+
+	def _qCurveToOne(self, p1, p2):
+		p0 = self._getCurrentPoint()
+		self.value += self._funcs[2]((p0, p1, p2))
+
+	def _curveToOne(self, p1, p2, p3):
+		p0 = self._getCurrentPoint()
+		self.value += self._funcs[3]((p0, p1, p2, p3))
+
+
 b = ((0,0), (0,1), (1,1), (1,0))
 b1 = ((0,0), (0,2), (1,2), (1,0))
 b2 = ((0,0), (0,1), (2,1), (2,0))
@@ -44,73 +92,98 @@ b100 = ((100,0), (100,1), (101,1), (101,0))
 b4 = ((-1,0), (-1,1), (1,1), (1,0))
 b5 = ((-2,0), (-2,1), (2,1), (2,0))
 
-area = green(1)
-area_f = lambdify(area)
-print "area", area_f
+AreaPen = partial(GreenPen, func=1)
+Moment1XPen = partial(GreenPen, func=x)
+Moment1YPen = partial(GreenPen, func=y)
+Moment2XXPen = partial(GreenPen, func=x*x)
+Moment2YYPen = partial(GreenPen, func=y*y)
+Moment2XYPen = partial(GreenPen, func=x*y)
 
-xmom1 = green(x)
-xmom1_f = lambdify(xmom1)
-xmean_f = lambda P: xmom1_f(P) / area_f(P)
-print "xmean", xmean_f
+class GlyphStatistics(object):
 
-ymom1 = green(y)
-ymom1_f = lambdify(ymom1)
-ymean_f = lambda P: ymom1_f(P) / area_f(P)
-print "ymean", ymean_f
+	def __init__(self, glyph, glyphset=None, scale=1):
+		self._glyph = glyph
+		self._glyphset = glyphset
+		self._scale = scale
 
-# https://en.wikipedia.org/wiki/Second_moment_of_area
+	def _penAttr(self, attr, scaleOrder):
+		internalName = '_'+attr
+		if internalName not in self.__dict__:
+			Pen = globals()[attr+'Pen']
+			pen = Pen(self._glyphset)
+			self._glyph.draw(pen)
+			self.__dict__[internalName] = pen.value / (self._scale ** scaleOrder)
+		return self.__dict__[internalName]
 
-xmom2 = green(x**2)
-xmom2_f = lambdify(xmom2)
-def xvar_f(P):
-	# https://en.wikipedia.org/wiki/Central_moment#Relation_to_moments_about_the_origin
+	Area = property(partial(_penAttr, attr='Area', scaleOrder=2))
+	Moment1X = property(partial(_penAttr, attr='Moment1X', scaleOrder=1))
+	Moment1Y = property(partial(_penAttr, attr='Moment1Y', scaleOrder=1))
+	Moment2XX = property(partial(_penAttr, attr='Moment2XX', scaleOrder=0))
+	Moment2YY = property(partial(_penAttr, attr='Moment2YY', scaleOrder=0))
+	Moment2XY = property(partial(_penAttr, attr='Moment2XY', scaleOrder=0))
+
+	# Center of mass
+	# https://en.wikipedia.org/wiki/Center_of_mass#A_continuous_volume
+	@property
+	def MeanX(self):
+		return self.Moment1X / self.Area
+	@property
+	def MeanY(self):
+		return self.Moment1Y / self.Area
+
+	# https://en.wikipedia.org/wiki/Second_moment_of_area
+
 	#  Var(X) = E[X^2] - E[X]^2
-	area = area_f(P)
-	xmom1 = xmom1_f(P)
-	xmom2 = xmom2_f(P)
-	xmean = xmom1 / area
-	xvar = xmom2 / area
-	return xvar - xmean**2
-print "xvar", xvar_f
+	@property
+	def VarianceX(self):
+		return self.Moment2XX / self.Area - self.MeanX**2
+	@property
+	def VarianceY(self):
+		return self.Moment2YY / self.Area - self.MeanY**2
+	
+	@property
+	def StdDevX(self):
+		return self.VarianceX**.5
+	@property
+	def StdDevY(self):
+		return self.VarianceY**.5
 
-ymom2 = green(y**2)
-ymom2_f = lambdify(ymom2)
-def yvar_f(P):
-	# https://en.wikipedia.org/wiki/Central_moment#Relation_to_moments_about_the_origin
-	#  Var(X) = E[X^2] - E[X]^2
-	area = area_f(P)
-	ymom1 = ymom1_f(P)
-	ymom2 = ymom2_f(P)
-	ymean = ymom1 / area
-	yvar = ymom2 / area
-	return yvar - ymean**2
-print "yvar", yvar_f
+	#  Covariance(X,Y) = ( E[X.Y] - E[X]E[Y] )
+	@property
+	def Covariance(self):
+		return self.Moment2XY / self.Area - self.MeanX*self.MeanY
 
-
-xymom = green(x * y)
-xymom_f = lambdify(xymom)
-def corr_f(P):
+	#  Correlation(X,Y) = Covariance(X,Y) / ( StdDev(X) * StdDev(Y)) )
 	# https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient
-	#  Covar(X,Y) = ( E[X.Y] - E[X]E[Y] ) / (sigma_X.sigma_Y)
-	area = area_f(P)
-	xmom1 = xmom1_f(P)
-	ymom1 = ymom1_f(P)
-	xmean = xmom1 / area
-	ymean = ymom1 / area
-	covar = xymom_f(P) / area
-	xsigma = xvar_f(P)**.5
-	ysigma = yvar_f(P)**.5
-	return (covar - xmean*ymean) / (xsigma*ysigma)
-print "corr", corr_f
+	@property
+	def Correlation(self):
+		return self.Covariance / (self.StdDevX * self.StdDevY)
 
-#from sympy import AppliedPredicate, Q
-#from sympy.assumptions.assume import global_assumptions
+
+def test(glyphset, upem):
+	print('upem', upem)
+
+	for glyph_name in ['e', 'o', 'I', 'slash', 'E', 'zero', 'eight', 'minus', 'equal']:
+		print()
+		print("glyph", glyph_name)
+		glyph = glyphset[glyph_name]
+		stats = GlyphStatistics(glyph, glyphset, scale=upem)
+		for item in dir(stats):
+			if item[0] == '_': continue
+			print ("%s: %g" % (item, getattr(stats, item)))
+
 
 def main(argv):
+	from fontTools.ttLib import TTFont
 	for filename in argv[1:]:
 		font = TTFont(filename)
-		foolAround(font.getGlyphSet(), font['head'].unitsPerEm)
+		glyphset = font.getGlyphSet()
+		test(font.getGlyphSet(), font['head'].unitsPerEm)
 
 if __name__ == '__main__':
 	import sys
 	main(sys.argv)
+
+#areag = green(1)
+#area_f = lambdify(areag)
+#print("area", area_f)
