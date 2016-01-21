@@ -127,6 +127,8 @@ class GlyphStatistics(object):
 	Moment2YY = property(partial(_penAttr, attr='Moment2YY'))
 	Moment2XY = property(partial(_penAttr, attr='Moment2XY'))
 
+	# TODO Memoize all properties
+
 	# Center of mass
 	# https://en.wikipedia.org/wiki/Center_of_mass#A_continuous_volume
 	@property
@@ -158,6 +160,19 @@ class GlyphStatistics(object):
 	def Covariance(self):
 		return self.Moment2XY / self.Area - self.MeanX*self.MeanY
 
+	@property
+	def CovarianceMatrix(self):
+		cov = self.Covariance
+		return ((self.VarianceX, cov), (cov, self.VarianceY))
+
+	@property
+	def Eigen(self):
+		mat = self.CovarianceMatrix
+		from numpy.linalg import eigh
+		vals,vecs = eigh(mat)
+		# XXX Should we transpose vecs?
+		return tuple(vals), tuple(tuple(row) for row in vecs)
+
 	#  Correlation(X,Y) = Covariance(X,Y) / ( StdDev(X) * StdDev(Y)) )
 	# https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient
 	@property
@@ -177,7 +192,7 @@ def test(glyphset, upem):
 		stats = GlyphStatistics(glyph, glyphset, scale=upem)
 		for item in dir(stats):
 			if item[0] == '_': continue
-			print ("%s: %g" % (item, getattr(stats, item)))
+			print ("%s: %s" % (item, getattr(stats, item)))
 
 
 def main(argv):
