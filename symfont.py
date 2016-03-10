@@ -182,17 +182,7 @@ class GlyphStatistics(object):
 
 	@property
 	def Slant(self):
-		eigenVals, eigenVecs = self.Eigen
-		largestIdx = eigenVals.index(max(eigenVals))
-		largestVal = eigenVals[largestIdx]
-		largestVec = eigenVecs[largestIdx]
-		smallestVal = eigenVals[1 - largestIdx]
-		smallestVec = eigenVecs[1 - largestIdx]
-		if abs(largestVec[0]) > abs(largestVec[1]):
-			# Rotate by 90 degrees
-			largestVec = -largestVec[1], largestVec[0]
-		#print(largestVec)
-		slant = largestVec[0] / largestVec[1]
+		slant = self.Covariance / self.VarianceY
 		if abs(slant) < 1e-3: slant = 0
 		return slant
 
