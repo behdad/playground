@@ -169,7 +169,7 @@ class GlyphStatistics(object):
 		mat = self.CovarianceMatrix
 		from numpy.linalg import eigh
 		vals,vecs = eigh(mat)
-		# XXX Should we transpose vecs?
+		# Note: we return eigen-vectors row-major, unlike Matlab, et al
 		return tuple(vals), tuple(tuple(row) for row in vecs)
 
 	#  Correlation(X,Y) = Covariance(X,Y) / ( StdDev(X) * StdDev(Y)) )
@@ -182,10 +182,19 @@ class GlyphStatistics(object):
 
 	@property
 	def Slant(self):
-		slant = math.pi*.5 - math.acos(self.Correlation)
+		eigenVals, eigenVecs = self.Eigen
+		largestIdx = eigenVals.index(max(eigenVals))
+		largestVal = eigenVals[largestIdx]
+		largestVec = eigenVecs[largestIdx]
+		smallestVal = eigenVals[1 - largestIdx]
+		smallestVec = eigenVecs[1 - largestIdx]
+		if abs(largestVec[0]) > abs(largestVec[1]):
+			# Rotate by 90 degrees
+			largestVec = -largestVec[1], largestVec[0]
+		#print(largestVec)
+		slant = largestVec[0] / largestVec[1]
 		if abs(slant) < 1e-3: slant = 0
 		return slant
-
 
 
 def test(glyphset, upem):
