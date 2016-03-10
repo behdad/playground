@@ -160,12 +160,12 @@ class GlyphStatistics(object):
 		return self.Moment2XY / self.Area - self.MeanX*self.MeanY
 
 	@property
-	def CovarianceMatrix(self):
+	def _CovarianceMatrix(self):
 		cov = self.Covariance
 		return ((self.VarianceX, cov), (cov, self.VarianceY))
 
 	@property
-	def Eigen(self):
+	def _Eigen(self):
 		mat = self.CovarianceMatrix
 		from numpy.linalg import eigh
 		vals,vecs = eigh(mat)
@@ -202,12 +202,12 @@ def test(glyphset, upem, glyphs):
 
 	for glyph_name in glyphs:
 		print()
-		print("glyph", glyph_name)
+		print("glyph:", glyph_name)
 		glyph = glyphset[glyph_name]
 		stats = GlyphStatistics(glyph, glyphset, scale=upem)
 		for item in dir(stats):
 			if item[0] == '_': continue
-			print ("%s: %s" % (item, getattr(stats, item)))
+			print ("%s: %g" % (item, getattr(stats, item)))
 
 
 def main(args):
