@@ -1,7 +1,15 @@
+"""
+Pen to calculate geometrical glyph statistics.
+
+When this is fully fleshed out, it will be moved to a more prominent
+place, like fontTools.pens.
+"""
+
 from __future__ import print_function, division, absolute_import
 from fontTools.misc.py23 import *
 
 import sympy as sp
+import math
 from fontTools.pens.basePen import BasePen
 from functools import partial
 
@@ -118,7 +126,7 @@ class GlyphStatistics(object):
 	Moment2YY = property(partial(_penAttr, attr='Moment2YY'))
 	Moment2XY = property(partial(_penAttr, attr='Moment2XY'))
 
-	# TODO Memoize all properties
+	# TODO Memoize properties below
 
 	# Center of mass
 	# https://en.wikipedia.org/wiki/Center_of_mass#A_continuous_volume
@@ -169,8 +177,15 @@ class GlyphStatistics(object):
 	@property
 	def Correlation(self):
 		corr = self.Covariance / (self.StdDevX * self.StdDevY)
-		if abs(corr) < 1e-4: corr = 0
+		if abs(corr) < 1e-3: corr = 0
 		return corr
+
+	@property
+	def Slant(self):
+		slant = math.pi*.5 - math.acos(self.Correlation)
+		if abs(slant) < 1e-3: slant = 0
+		return slant
+
 
 
 def test(glyphset, upem):
