@@ -88,15 +88,6 @@ class GreenPen(BasePen):
 		self._segment(p0,p1,p2,p3)
 
 
-b = ((0,0), (0,1), (1,1), (1,0))
-b1 = ((0,0), (0,2), (1,2), (1,0))
-b2 = ((0,0), (0,1), (2,1), (2,0))
-b3 = ((0,0), (0,2), (2,2), (2,0))
-b100 = ((100,0), (100,1), (101,1), (101,0))
-
-b4 = ((-1,0), (-1,1), (1,1), (1,0))
-b5 = ((-2,0), (-2,1), (2,1), (2,0))
-
 AreaPen = partial(GreenPen, func=1)
 Moment1XPen = partial(GreenPen, func=x)
 Moment1YPen = partial(GreenPen, func=y)
