@@ -197,10 +197,10 @@ class GlyphStatistics(object):
 		return slant
 
 
-def test(glyphset, upem):
+def test(glyphset, upem, glyphs):
 	print('upem', upem)
 
-	for glyph_name in ['e', 'o', 'I', 'slash', 'E', 'zero', 'eight', 'minus', 'equal']:
+	for glyph_name in glyphs:
 		print()
 		print("glyph", glyph_name)
 		glyph = glyphset[glyph_name]
@@ -210,16 +210,18 @@ def test(glyphset, upem):
 			print ("%s: %s" % (item, getattr(stats, item)))
 
 
-def main(argv):
+def main(args):
+	filename, glyphs = args[0], args[1:]
+	if not glyphs:
+		glyphs = ['e', 'o', 'I', 'slash', 'E', 'zero', 'eight', 'minus', 'equal']
 	from fontTools.ttLib import TTFont
-	for filename in argv[1:]:
-		font = TTFont(filename)
-		glyphset = font.getGlyphSet()
-		test(font.getGlyphSet(), font['head'].unitsPerEm)
+	font = TTFont(filename)
+	glyphset = font.getGlyphSet()
+	test(font.getGlyphSet(), font['head'].unitsPerEm, glyphs)
 
 if __name__ == '__main__':
 	import sys
-	main(sys.argv)
+	main(sys.argv[1:])
 
 #areag = green(1)
 #area_f = lambdify(areag)
