@@ -21,7 +21,6 @@ def build_ttfs (src):
 
 	print "Load into Robofab font"
 	masters = glyphs2ufo.torf.to_robofab(dic)
-	master_infos = dic['fontMaster']
 	del dic
 
 	print "Converting masters to compatible quadratics"
@@ -41,7 +40,7 @@ def build_ttfs (src):
 		compiler.compile()
 		master_ttfs.append(fullname+".ttf")
 
-	return master_ttfs, master_infos
+	return master_ttfs, masters
 
 
 def AddName(font, name):
@@ -184,7 +183,13 @@ def AddGlyphVariations(out, masters, locations, origin_idx):
 				var = GlyphVariation({tag: (min(value, 0.), value, max(value, 0.))}, coords)
 				gvar.variations[glyph].append(var)
 
-def build_gx(master_ttfs, master_infos):
+def glyphs_ufo_get_weight(font):
+	return font.lib.get(glyphs2ufo.torf.GLYPHS_PREFIX + 'weightValue', 100)
+
+def glyphs_ufo_get_width(font):
+	return font.lib.get(glyphs2ufo.torf.GLYPHS_PREFIX + 'widthValue',  100)
+
+def build_gx(master_ttfs, master_ufos):
 	print "Building GX"
 	print "Loading TTF masters"
 	master_fonts = [TTFont(f) for f in master_ttfs]
@@ -193,13 +198,13 @@ def build_gx(master_ttfs, master_infos):
 	regular_idx = [s.endswith("Regular.ttf") for s in master_ttfs].index(True)
 	print "Using %s as base font" % master_ttfs[regular_idx]
 	regular = master_fonts[regular_idx]
-	regular_weight = float(master_infos[regular_idx]['weightValue'])
-	regular_width = float(master_infos[regular_idx]['widthValue'])
+	regular_weight = glyphs_ufo_get_weight(master_ufos[regular_idx])
+	regular_width  = glyphs_ufo_get_width (master_ufos[regular_idx])
 
 	# Set up master locations
-	master_points = [{'wght': m['weightValue'] / regular_weight,
-			  'wdth': m['widthValue']  / regular_width}
-			 for m in master_infos]
+	master_points = [{'wght': glyphs_ufo_get_weight(m) / regular_weight,
+			  'wdth': glyphs_ufo_get_width (m) / regular_width}
+			 for m in master_ufos]
 	weights = [m['wght'] for m in master_points]
 	widths  = [m['wdth'] for m in master_points]
 	from pprint import pprint
@@ -238,10 +243,10 @@ if __name__ == '__main__':
 		except (IOError, EOFError):
 			c = {}
 
-		if not 'master_ttfs' in c or not 'master_infos' in c:
-			c['master_ttfs'], c['master_infos'] = build_ttfs(src)
+		if not 'master_ttfs' in c or not 'master_ufos' in c:
+			c['master_ttfs'], c['master_ufos'] = build_ttfs(src)
 
-		pickle.dump(c, open(pickle_file, 'wb'), pickle.HIGHEST_PROTOCOL)
+		#pickle.dump(c, open(pickle_file, 'wb'), pickle.HIGHEST_PROTOCOL)
 
 		if not 'gx' in c:
-			c['gx'] = build_gx(c['master_ttfs'], c['master_infos'])
+			c['gx'] = build_gx(c['master_ttfs'], c['master_ufos'])
