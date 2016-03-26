@@ -1,11 +1,9 @@
 #!/usr/bin/python
 
 from __future__ import division
-import glyphs2ufo.torf
 import glyphs2ufo.glyphslib
 import glyphs2ufo.torf
-#from ufo2fdk import OTFCompiler
-from fontbuild.convertCurves import glyphCurvesToQuadratic
+from cu2qu.rf import fonts_to_quadratic
 from fontbuild.outlineTTF import OutlineTTFCompiler
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables._n_a_m_e import NameRecord
@@ -26,6 +24,9 @@ def build_ttfs (src):
 	master_infos = dic['fontMaster']
 	del dic
 
+	print "Converting masters to compatible quadratics"
+	fonts_to_quadratic(masters, dump_stats=True)
+
 	master_ttfs = []
 	for master in masters:
 
@@ -34,14 +35,6 @@ def build_ttfs (src):
 		fullname = "%s-%s" % (family, style)
 
 		print "Processing master", fullname
-
-		#compiler = OTFCompiler()
-		#reports = compiler.compile(master, fullname+".otf", autohint=False)
-		#print reports
-
-		print "Converting outlines to quadratic"
-		for glyph in master:
-			     glyphCurvesToQuadratic(glyph)
 
 		print "Compiling master"
 		compiler = OutlineTTFCompiler(master, fullname+".ttf")
