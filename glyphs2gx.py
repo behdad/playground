@@ -3,7 +3,7 @@
 from __future__ import division
 import glyphs2ufo.glyphslib
 import glyphs2ufo.torf
-from cu2qu.rf import fonts_to_quadratic
+import cu2qu.rf
 from fontbuild.outlineTTF import OutlineTTFCompiler
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables._n_a_m_e import NameRecord
@@ -24,7 +24,7 @@ def build_ttfs (src):
 	del dic
 
 	print "Converting masters to compatible quadratics"
-	fonts_to_quadratic(masters, dump_stats=True)
+	cu2qu.rf.fonts_to_quadratic(masters, dump_stats=True)
 
 	master_ttfs = []
 	for master in masters:
