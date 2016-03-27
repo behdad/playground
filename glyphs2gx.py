@@ -4,7 +4,7 @@ from __future__ import division
 import glyphs2ufo.glyphslib
 import glyphs2ufo.torf
 import cu2qu.rf
-from fontbuild.outlineTTF import OutlineTTFCompiler
+import ufo2ft
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables._n_a_m_e import NameRecord
 from fontTools.ttLib.tables._f_v_a_r import table__f_v_a_r, Axis, NamedInstance
@@ -36,9 +36,10 @@ def build_ttfs (src):
 		print "Processing master", fullname
 
 		print "Compiling master"
-		compiler = OutlineTTFCompiler(master, fullname+".ttf")
-		compiler.compile()
-		master_ttfs.append(fullname+".ttf")
+		ttfont = ufo2ft.compileTTF(master)
+		outfile = fullname+".ttf"
+		ttfont.save(outfile)
+		master_ttfs.append(outfile)
 
 	return master_ttfs, masters
 
