@@ -5,18 +5,18 @@ import glyphs2ufo.glyphslib
 import glyphs2ufo.torf
 import cu2qu.rf
 import ufo2ft
+import fontmake.font_project
 from fontTools.ttLib import TTFont
 from fontTools.ttLib.tables._n_a_m_e import NameRecord
 from fontTools.ttLib.tables._f_v_a_r import table__f_v_a_r, Axis, NamedInstance
 from fontTools.ttLib.tables._g_v_a_r import table__g_v_a_r, GlyphVariation
 import warnings
 
-def build_ttfs (src):
+def build_ttfs (srcfile):
 
-	print "Loading Glyphs src `%s' into memory" % src
-	if not hasattr(src, 'read'):
-		src = open(src)
-	dic = glyphs2ufo.glyphslib.load(src)
+	print "Loading Glyphs src `%s' into memory" % srcfile
+	src = fontmake.font_project.FontProject.preprocess(srcfile)
+	dic = glyphs2ufo.glyphslib.loads(src)
 	del src
 
 	print "Load into Robofab font"
