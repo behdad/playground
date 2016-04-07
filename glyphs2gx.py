@@ -2,8 +2,8 @@
 
 from __future__ import division
 import glyphs2ufo.glyphslib
-import glyphs2ufo.torf
-import cu2qu.rf
+import glyphs2ufo.builder
+import cu2qu.ufo
 import ufo2ft
 import fontmake.font_project
 from fontTools.ttLib import TTFont
@@ -20,11 +20,11 @@ def build_ttfs (srcfile):
 	del src
 
 	print "Load into Robofab font"
-	masters = glyphs2ufo.torf.to_robofab(dic)
+	masters = glyphs2ufo.builder.to_ufos(dic)
 	del dic
 
 	print "Converting masters to compatible quadratics"
-	cu2qu.rf.fonts_to_quadratic(masters, dump_stats=True)
+	cu2qu.ufo.fonts_to_quadratic(masters, dump_stats=True)
 
 	master_ttfs = []
 	for master in masters:
@@ -148,6 +148,10 @@ def AddGlyphVariations(out, masters, locations, origin_idx):
 	axis_mins = {tag:min(loc[tag] for loc in locations) for tag in axis_tags}
 	axis_maxs = {tag:max(loc[tag] for loc in locations) for tag in axis_tags}
 
+	print "Normalized master positions:"
+	from pprint import pprint
+	pprint(locations)
+
 	assert "gvar" not in out
 	gvar = out["gvar"] = table__g_v_a_r()
 	gvar.version = 1
@@ -185,10 +189,10 @@ def AddGlyphVariations(out, masters, locations, origin_idx):
 				gvar.variations[glyph].append(var)
 
 def glyphs_ufo_get_weight(font):
-	return font.lib.get(glyphs2ufo.torf.GLYPHS_PREFIX + 'weightValue', 100)
+	return font.lib.get(glyphs2ufo.builder.GLYPHS_PREFIX + 'weightValue', 100)
 
 def glyphs_ufo_get_width(font):
-	return font.lib.get(glyphs2ufo.torf.GLYPHS_PREFIX + 'widthValue',  100)
+	return font.lib.get(glyphs2ufo.builder.GLYPHS_PREFIX + 'widthValue',  100)
 
 def build_gx(master_ttfs, master_ufos):
 	print "Building GX"
@@ -208,8 +212,8 @@ def build_gx(master_ttfs, master_ufos):
 			 for m in master_ufos]
 	weights = [m['wght'] for m in master_points]
 	widths  = [m['wdth'] for m in master_points]
-	from pprint import pprint
 	print "Master positions:"
+	from pprint import pprint
 	pprint(master_points)
 
 	# Set up axes
