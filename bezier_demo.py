@@ -16,7 +16,7 @@ MAX_ERR = 2
 class BezierDemo(object):
     def __init__(self):
         self.ctrl_pts = []
-        self.ctrl_curve = []
+        self.curve = []
         self.approx_curves= []
         self.active_pt = -1
 
@@ -39,8 +39,7 @@ class BezierDemo(object):
     def calc_bez(self, ctrl_pts, rendered_pts):
         n = RESOLUTION
         for i in range(n + 1):
-            t = i / n
-            rendered_pts.append(self.bezier_at(ctrl_pts, t))
+            rendered_pts.append(self.bezier_at(ctrl_pts, i / n))
 
     def calc_bez_spline(self, ctrl_pts, rendered_pts):
         num_segments = len(ctrl_pts) - 2
@@ -56,11 +55,10 @@ class BezierDemo(object):
             rendered_pts.append(curve)
 
     def calc_approx(self):
-        self.ctrl_curve = []
+        self.curve = []
         self.approx_curves = []
-        self.calc_bez(self.ctrl_pts, self.ctrl_curve)
-        approx, error = cu2qu.curve_to_quadratic(self.ctrl_pts, MAX_ERR)
-        assert error <= MAX_ERR
+        self.calc_bez(self.ctrl_pts, self.curve)
+        approx = cu2qu.curve_to_quadratic(self.ctrl_pts, MAX_ERR)
         self.calc_bez_spline(approx, self.approx_curves)
 
     def handle_mouse_down(self, x, y):
@@ -93,11 +91,11 @@ class TkinterRenderer(object):
         root = Tkinter.Tk()
         self.canvas = Tkinter.Canvas(root, width=500, height=500)
         self.canvas.pack()
-        self.rendered_ctrl_pts = [
-            self.add_pt(4, 'black') for _ in range(4)]
-        self.rendered_ctrl_curve = self.add_curve(3, 'blue')
-        self.rendered_approx_curves = [
-            self.add_curve(1, 'green') for _ in range(10)]
+        self.ctrl_pt_ids = [
+            self.add_pt(6, 'black') for _ in range(4)]
+        self.curve_pt_ids = self.add_curve(4, 'blue')
+        self.approx_curve_pt_ids = [
+            self.add_curve(2, 'green') for _ in range(10)]
         self.canvas.bind('<Button-1>', self.handle_mouse_down)
         self.canvas.bind('<B1-Motion>', self.handle_mouse_move)
         Tkinter.mainloop()
@@ -123,11 +121,11 @@ class TkinterRenderer(object):
             self.move_pt(pt_id, x, y)
 
     def draw(self):
-        assert len(self.demo.approx_curves) <= len(self.rendered_approx_curves)
-        self.move_pts(self.rendered_ctrl_pts, self.demo.ctrl_pts)
-        self.move_pts(self.rendered_ctrl_curve, self.demo.ctrl_curve)
+        assert len(self.demo.approx_curves) <= len(self.approx_curve_pt_ids)
+        self.move_pts(self.ctrl_pt_ids, self.demo.ctrl_pts)
+        self.move_pts(self.curve_pt_ids, self.demo.curve)
         for pt_ids, pts in zip(
-                self.rendered_approx_curves, self.demo.approx_curves):
+                self.approx_curve_pt_ids, self.demo.approx_curves):
             self.move_pts(pt_ids, pts)
 
     def handle_mouse_down(self, event):
