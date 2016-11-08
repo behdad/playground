@@ -14,13 +14,18 @@ MAX_ERR = 2
 
 
 class BezierDemo(object):
-    def __init__(self):
+    def __init__(self, renderer_class):
         self.ctrl_pts = []
         self.curve = []
         self.approx_curves= []
         self.active_pt = -1
+        self.renderer = renderer_class(
+            self._handle_mouse_down, self._handle_mouse_move)
 
-    def handle_mouse_down(self, x, y):
+    def run(self):
+        self.renderer.run()
+
+    def _handle_mouse_down(self, renderer, x, y):
         if len(self.ctrl_pts) < 4:
             self.ctrl_pts.append((x, y))
             if len(self.ctrl_pts) == 4:
@@ -36,12 +41,17 @@ class BezierDemo(object):
                     self.active_pt = i
                     pt = other_pt
                     cur_dist = other_dist
+        self._draw(renderer)
 
-    def handle_mouse_move(self, x, y):
+    def _handle_mouse_move(self, renderer, x, y):
         if self.active_pt < 0:
             return
         self.ctrl_pts[self.active_pt] = (x, y)
         self._calc_approx()
+        self._draw(renderer)
+
+    def _draw(self, renderer):
+        renderer.draw(self.ctrl_pts, self.curve, self.approx_curves)
 
     def _dist(self, p1, p2):
         return math.hypot(p1[0] - p2[0], p1[1] - p2[1])
@@ -86,8 +96,11 @@ class BezierDemo(object):
 
 
 class TkinterRenderer(object):
-    def __init__(self, demo):
-        self.demo = demo
+    def __init__(self, mouse_down_callback, mouse_move_callback):
+        self.mouse_down_callback = mouse_down_callback
+        self.mouse_move_callback = mouse_move_callback
+
+    def run(self):
         root = Tkinter.Tk()
         self.canvas = Tkinter.Canvas(root, width=750, height=750)
         self.canvas.pack()
@@ -99,6 +112,14 @@ class TkinterRenderer(object):
         self.canvas.bind('<Button-1>', self._handle_mouse_down)
         self.canvas.bind('<B1-Motion>', self._handle_mouse_move)
         Tkinter.mainloop()
+
+    def draw(self, ctrl_pts, curve, approx_curves):
+        assert len(approx_curves) <= len(self.approx_curve_pt_ids)
+        self._move_pts(self.ctrl_pt_ids, ctrl_pts)
+        self._move_pts(self.curve_pt_ids, curve)
+        for pt_ids, pts in zip(
+                self.approx_curve_pt_ids, approx_curves):
+            self._move_pts(pt_ids, pts)
 
     def _add_pt(self, radius, color):
         return self.canvas.create_oval(
@@ -120,26 +141,16 @@ class TkinterRenderer(object):
         for pt_id, (x, y) in zip(pt_ids, pts):
             self._move_pt(pt_id, x, y)
 
-    def _draw(self):
-        assert len(self.demo.approx_curves) <= len(self.approx_curve_pt_ids)
-        self._move_pts(self.ctrl_pt_ids, self.demo.ctrl_pts)
-        self._move_pts(self.curve_pt_ids, self.demo.curve)
-        for pt_ids, pts in zip(
-                self.approx_curve_pt_ids, self.demo.approx_curves):
-            self._move_pts(pt_ids, pts)
-
     def _handle_mouse_down(self, event):
-        self.demo.handle_mouse_down(event.x, event.y)
-        self._draw()
+        self.mouse_down_callback(self, event.x, event.y)
 
     def _handle_mouse_move(self, event):
-        self.demo.handle_mouse_move(event.x, event.y)
-        self._draw()
+        self.mouse_move_callback(self, event.x, event.y)
 
 
 def main():
-    demo = BezierDemo()
-    TkinterRenderer(demo)
+    demo = BezierDemo(TkinterRenderer)
+    demo.run()
 
 
 if __name__ == '__main__':
