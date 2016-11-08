@@ -20,6 +20,29 @@ class BezierDemo(object):
         self.approx_curves= []
         self.active_pt = -1
 
+    def handle_mouse_down(self, x, y):
+        if len(self.ctrl_pts) < 4:
+            self.ctrl_pts.append((x, y))
+            if len(self.ctrl_pts) == 4:
+                self._calc_approx()
+        else:
+            self.active_pt = 0
+            pt = self.ctrl_pts[0]
+            cur_dist = self._dist(pt, (x, y))
+            for i in range(1, len(self.ctrl_pts)):
+                other_pt = self.ctrl_pts[i]
+                other_dist = self._dist(other_pt, (x, y))
+                if other_dist < cur_dist:
+                    self.active_pt = i
+                    pt = other_pt
+                    cur_dist = other_dist
+
+    def handle_mouse_move(self, x, y):
+        if self.active_pt < 0:
+            return
+        self.ctrl_pts[self.active_pt] = (x, y)
+        self._calc_approx()
+
     def _dist(self, p1, p2):
         return math.hypot(p1[0] - p2[0], p1[1] - p2[1])
 
@@ -60,29 +83,6 @@ class BezierDemo(object):
         self._calc_bez(self.ctrl_pts, self.curve)
         approx = cu2qu.curve_to_quadratic(self.ctrl_pts, MAX_ERR)
         self._calc_bez_spline(approx, self.approx_curves)
-
-    def handle_mouse_down(self, x, y):
-        if len(self.ctrl_pts) < 4:
-            self.ctrl_pts.append((x, y))
-            if len(self.ctrl_pts) == 4:
-                self._calc_approx()
-        else:
-            self.active_pt = 0
-            pt = self.ctrl_pts[0]
-            cur_dist = self._dist(pt, (x, y))
-            for i in range(1, len(self.ctrl_pts)):
-                other_pt = self.ctrl_pts[i]
-                other_dist = self._dist(other_pt, (x, y))
-                if other_dist < cur_dist:
-                    self.active_pt = i
-                    pt = other_pt
-                    cur_dist = other_dist
-
-    def handle_mouse_move(self, x, y):
-        if self.active_pt < 0:
-            return
-        self.ctrl_pts[self.active_pt] = (x, y)
-        self._calc_approx()
 
 
 class TkinterRenderer(object):
