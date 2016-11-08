@@ -24,7 +24,7 @@ class BezierDemo(object):
         return math.hypot(p1[0] - p2[0], p1[1] - p2[1])
 
     def lerp(self, a, b, t):
-        return a * (1 - t) + b * t
+        return a + (b - a) * t
 
     def lerp_pt(self, p0, p1, t):
         (x0, y0), (x1, y1) = p0, p1
