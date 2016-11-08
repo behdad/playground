@@ -89,7 +89,7 @@ class TkinterRenderer(object):
     def __init__(self, demo):
         self.demo = demo
         root = Tkinter.Tk()
-        self.canvas = Tkinter.Canvas(root, width=500, height=500)
+        self.canvas = Tkinter.Canvas(root, width=750, height=750)
         self.canvas.pack()
         self.ctrl_pt_ids = [
             self.add_pt(6, 'black') for _ in range(4)]
