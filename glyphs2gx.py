@@ -19,9 +19,12 @@ def build_ttfs (srcfile):
 	dic = glyphs2ufo.glyphslib.loads(src)
 	del src
 
-	print "Load into Robofab font"
-	masters = glyphs2ufo.builder.to_ufos(dic)
+	print "Load into UFO objects"
+	masters, instances = glyphs2ufo.builder.to_ufos(dic, include_instances=True)
 	del dic
+	print("Instances:")
+	from pprint import pprint
+	pprint(instances)
 
 	print "Converting masters to compatible quadratics"
 	cu2qu.ufo.fonts_to_quadratic(masters, dump_stats=True)
@@ -41,7 +44,7 @@ def build_ttfs (srcfile):
 		ttfont.save(outfile)
 		master_ttfs.append(outfile)
 
-	return master_ttfs, masters
+	return master_ttfs, masters, instances
 
 
 def AddName(font, name):
@@ -248,10 +251,10 @@ if __name__ == '__main__':
 		except (IOError, EOFError):
 			c = {}
 
-		if not 'master_ttfs' in c or not 'master_ufos' in c:
-			c['master_ttfs'], c['master_ufos'] = build_ttfs(src)
+		if not 'master_ttfs' in c or not 'master_ufos' in c or not 'instances' in c:
+			c['master_ttfs'], c['master_ufos'], c['instances'] = build_ttfs(src)
 
 		#pickle.dump(c, open(pickle_file, 'wb'), pickle.HIGHEST_PROTOCOL)
 
 		if not 'gx' in c:
-			c['gx'] = build_gx(c['master_ttfs'], c['master_ufos'])
+			c['gx'] = build_gx(c['master_ttfs'], c['master_ufos'], c['instances'])
